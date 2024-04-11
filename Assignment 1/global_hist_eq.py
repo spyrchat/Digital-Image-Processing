@@ -1,4 +1,5 @@
 import numpy as np
+from PIL import Image
 
 def get_equalization_transform_of_img(img_array: np.ndarray,):
     L = 256
@@ -14,6 +15,10 @@ def get_equalization_transform_of_img(img_array: np.ndarray,):
     u = np.zeros(256)
     u = np.cumsum(prob)
     y = np.round((u - u[0])/(1 - u[0]) * (L - 1))
+    y = y.astype(int)
     return y
+
+# def global_hist_equalization(img_array: np.ndarray):
+
         
 
