@@ -33,3 +33,19 @@ region_len_h: int,region_len_w: int):
     return region_to_eq_transform
 
     
+def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,region_len_w: int):
+    W = img_array.shape[1]
+    H = img_array.shape[0]
+    transformation_dict = calculate_eq_transformations_of_regions(img_array,region_len_h,region_len_w)
+    equalized_img = np.zeros_like(img_array)
+    for y in range(H):
+        for x in range(W):
+            block_j = y // region_len_h
+            block_i = x // region_len_w
+
+            if y % region_len_h == 0 or y % region_len_h == region_len_h - 1 or \
+               x % region_len_w == 0 or x % region_len_w == region_len_w - 1:
+                # Pixel is in the outer region of a block
+                pixel_value = img_array[y, x]
+                transform = transformation_dict[block_j * region_len_h, block_i * region_len_w]
+                equalized_img[y, x] = transform[pixel_value]
