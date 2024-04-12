@@ -75,27 +75,26 @@ def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,r
                         w_left = i[1]
                     if i[1] >= x:
                         w_right = i[1]
-                    if i[0] < y:
-                        h_down = i[0]
-                    if i[0] >= y:
-                        h_up = i[0] 
+                    if i[0] > y:
+                        h_up = i[0]
+                    if i[0] <= y:
+                        h_down = i[0] 
               
                 # Calculate interpolation weights
-                a = (x - (w_left - region_len_w // 2)) / region_len_w
-                b = (y - (h_up - region_len_h // 2)) / region_len_h
+                a = (x - w_left ) / (w_right - w_left)
+                b = (y - h_down ) / (h_up - h_down)
 
                 # Interpolate the pixel value using the transformation functions
-                T_tl = transformation_dict.get((h_up, w_left), np.zeros(256))
-                T_tr = transformation_dict.get((h_up, w_right), np.zeros(256))
-                T_bl = transformation_dict.get((h_down, w_left), np.zeros(256))
-                T_br = transformation_dict.get((h_down, w_right), np.zeros(256))
+                T_tl = transformation_dict.get((h_up - (region_len_h // 2), w_left - (region_len_w //2)), np.zeros(256))
+                T_tr = transformation_dict.get((h_up - (region_len_h // 2), w_right - (region_len_w // 2)), np.zeros(256))
+                T_bl = transformation_dict.get((h_down - (region_len_h // 2), w_left - (region_len_w // 2)), np.zeros(256))
+                T_br = transformation_dict.get((h_down -  (region_len_h // 2), w_right - (region_len_w // 2)), np.zeros(256))
                 
                 pixel_value = img_array[y, x]
                 interpolated_value = (
-                    (1 - a) * (1 - b) * T_tl[pixel_value] +
-                    a * (1 - b) * T_tr[pixel_value] +
-                    (1 - a) * b * T_bl[pixel_value] +
-                    a * b * T_br[pixel_value]
+                    a*b*T_tl[pixel_value] + a*(1-b)*T_tr[pixel_value] + 
+                    (1-a)*b*T_bl[pixel_value] + (1-a)*(1-b)*T_br[pixel_value]
+
                 )
                 # Assign the interpolated value to the output image
                 equalized_img[y, x] = interpolated_value

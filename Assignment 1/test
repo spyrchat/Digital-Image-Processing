@@ -1,0 +1,26 @@
+import numpy as np
+
+def find_four_closest_centers(points, known_point):
+    # Convert the list of points to a NumPy array
+    points_array = np.array(points)
+    
+    # Calculate the differences between each point and the known point
+    diff = points_array - known_point
+    
+    # Square the differences
+    squared_diff = diff ** 2
+    
+    # Sum the squared differences along the appropriate axis to get the squared distances
+    squared_distances = np.sum(squared_diff, axis=1)
+    
+    # Find the indices of the four smallest squared distances
+    closest_indices = np.argsort(squared_distances)[:4]
+    
+    # Retrieve the corresponding points and return them as the four closest centers
+    closest_centers = [points[i] for i in closest_indices]
+    return closest_centers
+
+# Example usage:
+points = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10)]
+known_point = (3, 3)
+print(find_four_closest_centers(points, known_point))
