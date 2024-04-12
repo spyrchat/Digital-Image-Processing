@@ -10,14 +10,6 @@ region_len_h: int,region_len_w: int):
     total_blocks = num_blocks_w * num_blocks_h
     top_left_corners = []
     region_to_eq_transform = {}
-    # # The outer loop should iterate over the height
-    # for i in range(0, H, region_len_h):
-    #     # The inner loop should iterate over the width
-    #     for j in range(0, W, region_len_w):
-    #         top_left_corners.append((i, j))
-
-    # print(top_left_corners)
-    # assert len(top_left_corners) == total_blocks
 
     for j in range(num_blocks_h):
         for i in range(num_blocks_w):
@@ -34,16 +26,12 @@ region_len_h: int,region_len_w: int):
 
 
 def find_four_closest_centers(points, known_point):
-    # Convert the tuple of points to a NumPy array for vectorized operations
+    
     points_array = np.array(points)
-    # Calculate the squared differences from the known point
     diff = points_array - known_point
     squared_diff = diff ** 2
-    # Sum the squared differences across coordinates to get squared distances
     squared_distances = np.sum(squared_diff, axis=1)
-    # Get the indices of the four smallest squared distances
     closest_indices = np.argsort(squared_distances)[:4]
-    # Select and return the points with the smallest squared distances
     closest_centers = [points[i] for i in closest_indices]
     return closest_centers
     
@@ -92,46 +80,28 @@ def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,r
                     if i[0] >= y:
                         h_up = i[0] 
               
-            # Calculate interpolation weights
-            a = (x - (w_left - region_len_w // 2)) / region_len_w
-            b = (y - (h_up - region_len_h // 2)) / region_len_h
+                # Calculate interpolation weights
+                a = (x - (w_left - region_len_w // 2)) / region_len_w
+                b = (y - (h_up - region_len_h // 2)) / region_len_h
 
-            # Interpolate the pixel value using the transformation functions
-            T_tl = transformation_dict.get((h_up, w_left), np.zeros(256))
-            T_tr = transformation_dict.get((h_up, w_right), np.zeros(256))
-            T_bl = transformation_dict.get((h_down, w_left), np.zeros(256))
-            T_br = transformation_dict.get((h_down, w_right), np.zeros(256))
-            
-            pixel_value = img_array[y, x]
-            interpolated_value = (
-                (1 - a) * (1 - b) * T_tl[pixel_value] +
-                a * (1 - b) * T_tr[pixel_value] +
-                (1 - a) * b * T_bl[pixel_value] +
-                a * b * T_br[pixel_value]
-            )
-            # Assign the interpolated value to the output image
-            equalized_img[y, x] = interpolated_value
+                # Interpolate the pixel value using the transformation functions
+                T_tl = transformation_dict.get((h_up, w_left), np.zeros(256))
+                T_tr = transformation_dict.get((h_up, w_right), np.zeros(256))
+                T_bl = transformation_dict.get((h_down, w_left), np.zeros(256))
+                T_br = transformation_dict.get((h_down, w_right), np.zeros(256))
+                
+                pixel_value = img_array[y, x]
+                interpolated_value = (
+                    (1 - a) * (1 - b) * T_tl[pixel_value] +
+                    a * (1 - b) * T_tr[pixel_value] +
+                    (1 - a) * b * T_bl[pixel_value] +
+                    a * b * T_br[pixel_value]
+                )
+                # Assign the interpolated value to the output image
+                equalized_img[y, x] = interpolated_value
 
     return equalized_img
 
-
-
-
-
-
-
-
-
-                # neighbors = [block_j + 1, block_j - 1, block_i + 1, block_i - 1]
-                # neighbor_centers = [(block_j + 1) * region_len_h + region_len_h // 2,
-                #                     (block_j - 1) * region_len_h + region_len_h // 2,
-                #                     (block_i + 1) * region_len_w + region_len_w // 2,
-                #                     (block_i - 1) * region_len_w + region_len_w // 2]
-                
-
-                # alpha = (x - neighbor_centers[3])/(neighbor_centers[2] - neighbor_centers[3])
-                # beta = (y - neighbor_centers[1])/(neighbor_centers[0] - neighbor_centers[1])
-                # for i in 
 
 
 
