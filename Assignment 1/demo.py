@@ -8,7 +8,7 @@ from adaptive_hist_eq import calculate_eq_transformations_of_regions, perform_ad
 # are defined in adaptive_hist_eq and imported correctly
 
 # Load the image and convert it to a grayscale NumPy array
-filename = "./input_img.png"
+filename = "Assignment 1/input_img.png"
 img = Image.open(filename)
 bw_img = img.convert("L")
 img_array = np.array(bw_img)
