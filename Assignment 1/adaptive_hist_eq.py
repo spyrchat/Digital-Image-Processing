@@ -74,22 +74,32 @@ def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,r
                 h_up, h_down = None, None
 
                 for i in contextual_neighbours:
-                    if i[1] < x and (w_left is None or i[1] > w_left):
+                    if i[1] <= x and (w_left is None or i[1] > w_left):
                         w_left = i[1]
                     if i[1] >= x and (w_right is None or i[1] < w_right):
                         w_right = i[1]
-                    if i[0] > y and (h_down is None or i[0] < h_down):
+                    if i[0] >= y and (h_down is None or i[0] < h_down):
                         h_down = i[0]
                     if i[0] <= y and (h_up is None or i[0] > h_up):
                         h_up = i[0]
                 
                 if w_left is None or w_right is None or h_up is None or h_down is None:
-                    transform = transformation_dict[(block_j * region_len_h, block_i * region_len_w)]
-                    equalized_img[y, x] = transform[pixel_value]
+                    # transform = transformation_dict[(block_j * region_len_h, block_i * region_len_w)]
+                    # equalized_img[y, x] = transform[pixel_value]
+                    if w_left is None:
+                        w_left = x
+                    if w_right is None:
+                        w_right = x
+                    if h_up is None:
+                        h_up = y
+                    if h_down is None:
+                        h_down = y
+                    print(w_left, w_right, h_up, h_down)
                     # raise ValueError("Could not find four closest centers for pixel ({}, {})".format(y, x))
                 
                 else:
                 # Calculate interpolation weights
+                    # print(w_left, w_right, h_up, h_down)
                     a = (x - w_left) / (w_right - w_left) if w_right != w_left else 0.5
                     b = (y - h_down) / (h_up - h_down) if h_up != h_down else 0.5
 
@@ -106,7 +116,7 @@ def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,r
                         (1 - a) * b * T_bl[pixel_value] +
                         (1 - a) * (1 - b) * T_tl[pixel_value]
                     )
-                    equalized_img[y, x] = np.round(interpolated_value)
+                    equalized_img[y, x] = interpolated_value
 
     return equalized_img
 
