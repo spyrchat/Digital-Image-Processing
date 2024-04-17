@@ -15,7 +15,7 @@ img_array = np.array(bw_img)
 
 # Perform adaptive histogram equalization on the image array
 # with given region sizes for the local histograms
-new_img_array = perform_adaptive_hist_equalization(img_array, region_len_h=20, region_len_w=19)
+new_img_array = perform_adaptive_hist_equalization(img_array, region_len_h=48, region_len_w=64)
 
 # Ensure the new image array is in the correct byte range and data type
 new_img_array = np.clip(new_img_array, 0, 255).astype(np.uint8)
