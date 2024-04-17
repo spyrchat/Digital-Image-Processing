@@ -24,6 +24,15 @@ def perform_global_hist_equalization(img_array: np.ndarray):
     equalized_img = equalized_img[img_array]
     return equalized_img
 
+
+
+
+
+#================================================================================================#
+# The functions below are used to plot the transformation function and histogram of the image
+# after global histogram equalization. They are helper functions for the demo script.
+#================================================================================================#
+
 def plot_transformation_function(img_path):
     # Load the image and convert to grayscale
     img = Image.open(img_path).convert('L')
