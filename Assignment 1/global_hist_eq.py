@@ -15,7 +15,8 @@ def get_equalization_transform_of_img(img_array: np.ndarray,):
     prob = prob / len(img_array)
     u = np.zeros(256)
     u = np.cumsum(prob)
-    y = np.round((u - u.min())/(1 - u.min()) * (L - 1))
+    u_non_zero_min = u[u > 0].min()
+    y = np.round((u - u_non_zero_min)/(1 - u_non_zero_min) * (L - 1))
     y = y.astype(np.uint8)
     return y
 
