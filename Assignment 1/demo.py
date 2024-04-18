@@ -2,7 +2,7 @@ from PIL import Image
 import numpy as np
 from global_hist_eq import perform_global_hist_equalization
 from adaptive_hist_eq import perform_adaptive_hist_equalization, perform_adaptive_hist_equalization_no_interpolation
-from helper import plot_histogram, plot_transformation_function
+from helper import plot_histogram, plot_transformation_function, plot_histogram_side_to_side
 
 # Assume calculate_eq_transformations_of_regions and perform_adaptive_hist_equalization
 # are defined in adaptive_hist_eq and imported correctly
@@ -21,6 +21,7 @@ plot_histogram(img_array, "Original Histogram")
 
 plot_transformation_function(filename)
 
+plot_histogram_side_to_side(img_array)
 
 # Perform global histogram equalization on the image array
 new_img_array_global = perform_global_hist_equalization(img_array)

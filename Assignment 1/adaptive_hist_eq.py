@@ -39,10 +39,9 @@ def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,r
     centers = []
 
     for i in top_left_corners:
-        #The result of the division is NOT rounded down to the nearest integer
-        #This was to take care of the case where region_len_h or region_len_w is odd
-        center_y = i[0] + region_len_h / 2
-        center_x = i[1] + region_len_w / 2
+
+        center_y = i[0] + region_len_h // 2
+        center_x = i[1] + region_len_w // 2
         centers.append((center_y, center_x))
 
     for y in range(H):
@@ -51,7 +50,7 @@ def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,r
             block_i = x // region_len_w
 
             #Pixel is in the outer region, use the transformation of the region
-            if (y <= region_len_h / 2) or (x <= region_len_w / 2) or (y >= H - region_len_h / 2) or (x >= W - region_len_w / 2):
+            if (y <= region_len_h // 2) or (x <= region_len_w // 2) or (y >= H - region_len_h // 2) or (x >= W - region_len_w // 2):
                 pixel_value = img_array[y, x]
                 transform = transformation_dict[(block_j * region_len_h, block_i * region_len_w)]
                 equalized_img[y, x] = transform[pixel_value]
@@ -81,10 +80,10 @@ def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,r
                         # Interpolate the pixel value using the transformation functions
                         # The centers are tranlated to the top left corner of the region 
                         # Because the transformation functions are stored with respect to the top left corner of the region
-                        T_tl = transformation_dict.get((h_down - (region_len_h / 2), w_left - (region_len_w / 2)), np.zeros(256))
-                        T_tr = transformation_dict.get((h_down - (region_len_h / 2), w_right - (region_len_w / 2)), np.zeros(256))
-                        T_bl = transformation_dict.get((h_up - (region_len_h / 2), w_left - (region_len_w / 2)), np.zeros(256))
-                        T_br = transformation_dict.get((h_up -  (region_len_h / 2), w_right - (region_len_w / 2)), np.zeros(256))
+                        T_tl = transformation_dict.get((h_down - (region_len_h // 2), w_left - (region_len_w // 2)), np.zeros(256))
+                        T_tr = transformation_dict.get((h_down - (region_len_h // 2), w_right - (region_len_w // 2)), np.zeros(256))
+                        T_bl = transformation_dict.get((h_up - (region_len_h // 2), w_left - (region_len_w // 2)), np.zeros(256))
+                        T_br = transformation_dict.get((h_up -  (region_len_h // 2), w_right - (region_len_w // 2)), np.zeros(256))
                         
                         pixel_value = img_array[y, x]
                         interpolated_value = (
@@ -111,10 +110,8 @@ def perform_adaptive_hist_equalization_no_interpolation(img_array: np.ndarray,re
     centers = []
 
     for i in top_left_corners:
-        #The result of the division is NOT rounded down to the nearest integer
-        #This was to take care of the case where region_len_h or region_len_w is odd
-        center_y = i[0] + region_len_h / 2
-        center_x = i[1] + region_len_w / 2
+        center_y = i[0] + region_len_h // 2
+        center_x = i[1] + region_len_w // 2
         centers.append((center_y, center_x))
 
     for y in range(H):
