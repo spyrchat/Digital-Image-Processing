@@ -6,8 +6,8 @@ from adaptive_hist_eq import perform_adaptive_hist_equalization, perform_adaptiv
 
 
 #================================================================================================#
-# The functions below are used to plot the transformation function and histogram of the image
-# after global histogram equalization. They are helper functions for the demo script.
+# The functions below are used to plot the transformation function and histogram of the image. 
+# They are helper functions for the demo script.
 #================================================================================================#
 
 def plot_transformation_function(img_path):
