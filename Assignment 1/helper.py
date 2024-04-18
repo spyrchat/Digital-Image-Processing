@@ -38,7 +38,7 @@ def get_histogram(img_array: np.ndarray):
     return prob
 
 
-def plot_histogram(img_array: np.ndarray, Title: str = 'Original Histogram'):
+def plot_histogram(img_array: np.ndarray, Title: str = 'Original Histogram', region_len_h: int = 48, region_len_w: int = 64):
     L = 256
     plt.figure(figsize=(12, 6))
 
@@ -47,12 +47,12 @@ def plot_histogram(img_array: np.ndarray, Title: str = 'Original Histogram'):
         equalization_transform = perform_global_hist_equalization(img_array)
         y = get_histogram(equalization_transform)
     elif Title == 'Adaptive Equalized Histogram':
-        equalization_transform = perform_adaptive_hist_equalization(img_array, region_len_h=48, region_len_w=64)
+        equalization_transform = perform_adaptive_hist_equalization(img_array, region_len_h, region_len_w)
         y = get_histogram(equalization_transform)
     elif Title == 'Original Histogram':
         y = get_histogram(img_array)
     elif Title == 'Adaptive Equalized Histogram_no_interpolation':
-        equalization_transform = perform_adaptive_hist_equalization_no_interpolation(img_array, region_len_h=48, region_len_w=64)
+        equalization_transform = perform_adaptive_hist_equalization_no_interpolation(img_array, region_len_h, region_len_w)
         y = get_histogram(equalization_transform)
 
    
