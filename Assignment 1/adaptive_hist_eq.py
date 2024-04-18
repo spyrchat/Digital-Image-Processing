@@ -5,6 +5,8 @@ from PIL import Image
 def calculate_eq_transformations_of_regions(img_array: np.ndarray, region_len_h: int,region_len_w: int):
     W = img_array.shape[1]
     H = img_array.shape[0]
+    # Calculate the number of blocks in the horizontal and vertical directions,
+    # taking into account the possibility that the image dimensions are not divisible by the region length
     num_blocks_w = W// region_len_w + (1 if W % region_len_w > 0 else 0)
     num_blocks_h = H // region_len_h + (1 if H % region_len_h > 0 else 0)
     region_to_eq_transform = {}
@@ -13,10 +15,10 @@ def calculate_eq_transformations_of_regions(img_array: np.ndarray, region_len_h:
         for i in range(num_blocks_w):
             top_left_x = i * region_len_w
             top_left_y = j * region_len_h
-
+            # The min function is used to ensure that the bottom right corner of the region does not exceed the image dimensions
             bottom_right_x = min((i+1) * region_len_w, W)
             bottom_right_y = min((j+1) * region_len_h, H)
-
+            # The top left corner of the region is used as the key for the transformation dictionary
             region = img_array[top_left_y:bottom_right_y, top_left_x:bottom_right_x]
             region_to_eq_transform[(top_left_y,top_left_x)] = get_equalization_transform_of_img(region) 
 
@@ -30,10 +32,12 @@ def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,r
     transformation_dict = calculate_eq_transformations_of_regions(img_array,region_len_h,region_len_w)
     equalized_img = np.zeros_like(img_array)
     top_left_corners = []
+    
     for i in range(0, H, region_len_h):
         for j in range(0, W, region_len_w):
              top_left_corners.append((i, j))
     centers = []
+
     for i in top_left_corners:
         #The result of the division is NOT rounded down to the nearest integer
         #This was to take care of the case where region_len_h or region_len_w is odd
@@ -46,13 +50,13 @@ def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,r
             block_j = y // region_len_h
             block_i = x // region_len_w
 
+            #Pixel is in the outer region, use the transformation of the region
             if (y <= region_len_h / 2) or (x <= region_len_w / 2) or (y >= H - region_len_h / 2) or (x >= W - region_len_w / 2):
-                # Pixel is in the outer region, use the transformation of the nearest block
                 pixel_value = img_array[y, x]
                 transform = transformation_dict[(block_j * region_len_h, block_i * region_len_w)]
                 equalized_img[y, x] = transform[pixel_value]
             else:
-
+                # Pixel is a center itself, use the transformation of the block it belongs to
                 if (y,x) in centers:
                     transform = transformation_dict[(block_j * region_len_h, block_i * region_len_w)]
                     equalized_img[y, x] = transform[img_array[y, x]]
@@ -67,7 +71,10 @@ def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,r
                         raise ValueError("Could not find four closest centers for pixel ({}, {})".format(y, x))
                     
                     else:
-                        # Calculate interpolation weights
+                        # Calculate interpolation weights a and b for the pixel and check for division by zero
+                        # The division by zero is handled by setting the value to 0.01. OF COURSE the way the code works
+                        # is that it will never divide by zero, because w_right and w_left or h_up and h_down cant be the same
+                        # but it is good to have a check in place. Or maybe I am just paranoid...
                         a = (x - w_left) / (w_right - w_left) if w_right != w_left else 0.01
                         b = (y - h_down) / (h_up - h_down) if h_up != h_down else 0.01
 
@@ -98,37 +105,40 @@ def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,r
 # for calculation of the nearest center in order to optimize the code.
 #================================================================================================#
 
-def find_w_and_h(points, known_point, region_len_h, region_len_w):
+def find_w_and_h(points, pixel, region_len_h, region_len_w):
     points_array = np.array(points)
-    diff = points_array - known_point
+    diff = points_array - pixel
     squared_diff = diff ** 2
     squared_distances = np.sum(squared_diff, axis=1)
     closest_indices = np.argsort(squared_distances)[:1]
     closest_center =  points_array[closest_indices]
 
     #Translate the known point to the coordinate system with the closest center as the origin
-    delta_x = known_point[1] - closest_center[0][1]
-    delta_y = known_point[0] - closest_center[0][0]
+    delta_x = pixel[1] - closest_center[0][1]
+    delta_y = pixel[0] - closest_center[0][0]
     
-    # 1st quadrant
+    # The idea is that if I know the closest center to a pixel, I can figure out the quadrant in which the pixel lies with respect to the closest center.
+    # After that I can calculate the w_left, w_right, h_up, h_down values for the pixel accordingly, since there is symmetry between the 4 centers in a region.
+    
+    # 1st quadrant, here points that lie on the y-axis are also considered to be in the 1st quadrant
     if delta_x > 0 and delta_y <= 0:
         w_left = closest_center[0][1]
         w_right = closest_center[0][1] + region_len_w
         h_up = closest_center[0][0] - region_len_h
         h_down = closest_center[0][0]
-    # 2nd quadrant
+    # 2nd quadrant here points that lie on the x-axis, are also considered to be in the 2nd quadrant
     elif delta_x <= 0 and delta_y < 0:
         w_left = closest_center[0][1] - region_len_w
         w_right = closest_center[0][1]
         h_up = closest_center[0][0] - region_len_h
         h_down = closest_center[0][0]
-    # 3rd quadrant
+    # 3rd quadrant, here points that lie on the y-axis are also considered to be in the 3rd quadrant
     elif delta_x < 0 and delta_y >= 0:
         w_left = closest_center[0][1] - region_len_w
         w_right = closest_center[0][1]
         h_up = closest_center[0][0]
         h_down = closest_center[0][0] + region_len_h
-    # 4th quadrant  
+    # 4th quadrant, here points that lie on the x-axis are also considered to be in the 4th quadrant  
     elif delta_x >= 0 and delta_y > 0:
         w_left = closest_center[0][1]
         w_right = closest_center[0][1] + region_len_w
