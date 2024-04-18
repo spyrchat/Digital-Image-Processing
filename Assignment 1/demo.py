@@ -12,7 +12,7 @@ img = Image.open(filename)
 # The image is resized to 512x384 to fit an integer number of 48x64 regions
 # The resampling method used is Lanczos and it will make the image look better when resizing
 # I left this code commented out because the way the algorithms are implemented, they can work with any image size
-# img.resize((512, 384), Image.Resampling.LANCZOS)
+# img = img.resize((512, 384), Image.Resampling.LANCZOS)
 
 bw_img = img.convert("L")
 img_array = np.array(bw_img)
@@ -48,6 +48,6 @@ plot_histogram(new_img_array, "Adaptive Equalized Histogram")
 new_img_array_no_interpolation = perform_adaptive_hist_equalization_no_interpolation(img_array, region_len_h=48, region_len_w=64)
 new_img_array_no_interpolation = np.clip(new_img_array_no_interpolation, 0, 255).astype(np.uint8)
 new_img_pil_no_interpolation = Image.fromarray(new_img_array_no_interpolation)
-new_img_pil_no_interpolation.save("Assignment 1/adaptive_equalized_image_no_interpolation.png")
+new_img_pil_no_interpolation.save("./adaptive_equalized_image_no_interpolation.png")
 new_img_pil_no_interpolation.show()
 plot_histogram(new_img_array_no_interpolation, "Adaptive Equalized Histogram_no_interpolation")
