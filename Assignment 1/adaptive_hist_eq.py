@@ -98,6 +98,38 @@ def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,r
     return equalized_img
 
 
+def perform_adaptive_hist_equalization_no_interpolation(img_array: np.ndarray,region_len_h: int,region_len_w: int):
+    W = img_array.shape[1]
+    H = img_array.shape[0]
+    transformation_dict = calculate_eq_transformations_of_regions(img_array,region_len_h,region_len_w)
+    equalized_img = np.zeros_like(img_array)
+    top_left_corners = []
+    
+    for i in range(0, H, region_len_h):
+        for j in range(0, W, region_len_w):
+             top_left_corners.append((i, j))
+    centers = []
+
+    for i in top_left_corners:
+        #The result of the division is NOT rounded down to the nearest integer
+        #This was to take care of the case where region_len_h or region_len_w is odd
+        center_y = i[0] + region_len_h / 2
+        center_x = i[1] + region_len_w / 2
+        centers.append((center_y, center_x))
+
+    for y in range(H):
+        for x in range(W):
+            block_j = y // region_len_h
+            block_i = x // region_len_w
+
+        
+            pixel_value = img_array[y, x]
+            transform = transformation_dict[(block_j * region_len_h, block_i * region_len_w)]
+            equalized_img[y, x] = transform[pixel_value]
+           
+
+    return equalized_img
+
 #================================================================================================#
 # The function below is used to find the closest center to a given pixel. Afer finding the closest
 # center, the function figures out the quadrants in which the pixel lies with the nearest center as

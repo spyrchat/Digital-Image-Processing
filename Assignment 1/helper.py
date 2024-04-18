@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 from global_hist_eq import get_equalization_transform_of_img, perform_global_hist_equalization
-from adaptive_hist_eq import perform_adaptive_hist_equalization
+from adaptive_hist_eq import perform_adaptive_hist_equalization, perform_adaptive_hist_equalization_no_interpolation
 
 
 #================================================================================================#
@@ -51,6 +51,9 @@ def plot_histogram(img_array: np.ndarray, Title: str = 'Original Histogram'):
         y = get_histogram(equalization_transform)
     elif Title == 'Original Histogram':
         y = get_histogram(img_array)
+    elif Title == 'Adaptive Equalized Histogram_no_interpolation':
+        equalization_transform = perform_adaptive_hist_equalization_no_interpolation(img_array, region_len_h=48, region_len_w=64)
+        y = get_histogram(equalization_transform)
 
    
     # Plot original histogram

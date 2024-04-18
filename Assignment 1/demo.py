@@ -1,7 +1,7 @@
 from PIL import Image
 import numpy as np
 from global_hist_eq import perform_global_hist_equalization
-from adaptive_hist_eq import perform_adaptive_hist_equalization
+from adaptive_hist_eq import perform_adaptive_hist_equalization, perform_adaptive_hist_equalization_no_interpolation
 from helper import plot_histogram, plot_transformation_function
 
 # Assume calculate_eq_transformations_of_regions and perform_adaptive_hist_equalization
@@ -37,3 +37,10 @@ new_img_pil = Image.fromarray(new_img_array)
 new_img_pil.save("Assignment 1/adaptive_equalized_image.png")
 new_img_pil.show()
 plot_histogram(new_img_array, "Adaptive Equalized Histogram")
+
+new_img_array_no_interpolation = perform_adaptive_hist_equalization_no_interpolation(img_array, region_len_h=48, region_len_w=64)
+new_img_array_no_interpolation = np.clip(new_img_array_no_interpolation, 0, 255).astype(np.uint8)
+new_img_pil_no_interpolation = Image.fromarray(new_img_array_no_interpolation)
+new_img_pil_no_interpolation.save("Assignment 1/adaptive_equalized_image_no_interpolation.png")
+new_img_pil.show()
+plot_histogram(new_img_array_no_interpolation, "Adaptive Equalized Histogram_no_interpolation")
