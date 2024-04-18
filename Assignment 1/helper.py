@@ -66,6 +66,7 @@ def plot_histogram(img_array: np.ndarray, Title: str = 'Original Histogram', reg
     plt.tight_layout()
     plt.show()
 
+#helper function to plot histograms side by side
 def plot_histogram_side_to_side(img_array: np.ndarray):
     L = 256
     plt.figure(figsize=(12, 6))
