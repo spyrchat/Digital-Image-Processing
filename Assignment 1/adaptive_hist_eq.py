@@ -92,7 +92,7 @@ def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,r
                             (1 - a) * b * T_bl[pixel_value] +
                             (1 - a) * (1 - b) * T_tl[pixel_value]
                         )
-                        equalized_img[y, x] = interpolated_value
+                        equalized_img[y, x] = interpolated_value.astype(np.uint8)
 
     return equalized_img
 

@@ -8,12 +8,13 @@ from helper import plot_histogram, plot_transformation_function, plot_histogram_
 filename = "./input_img.png"
 img = Image.open(filename)
 
+
+
 # Resize the image to 512x384 - Optional
 # The image is resized to 512x384 to fit an integer number of 48x64 regions
 # The resampling method used is Lanczos and it will make the image look better when resizing
 # I left this code commented out because the way the algorithms are implemented, they can work with any image size
 # img = img.resize((512, 384), Image.Resampling.LANCZOS)
-
 bw_img = img.convert("L")
 img_array = np.array(bw_img)
 
