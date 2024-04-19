@@ -73,7 +73,7 @@ def perform_adaptive_hist_equalization(img_array: np.ndarray,region_len_h: int,r
                         # Calculate interpolation weights a and b for the pixel and check for division by zero
                         # The division by zero is handled by setting the value to 0.01. OF COURSE the way the code works
                         # is that it will never divide by zero, because w_right and w_left or h_up and h_down cant be the same
-                        # but it is good to have a check in place. Or maybe I am just paranoid...
+                        # but it is good to have a check in place.
                         a = (x - w_left) / (w_right - w_left) if w_right != w_left else 0.01
                         b = (y - h_down) / (h_up - h_down) if h_up != h_down else 0.01
 
