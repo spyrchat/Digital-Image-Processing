@@ -5,11 +5,7 @@ from adaptive_hist_eq import perform_adaptive_hist_equalization, perform_adaptiv
 from helper import plot_histogram, plot_transformation_function, plot_histogram_side_to_side
 
 # Load the image and convert it to a grayscale NumPy array
-<<<<<<< HEAD
 filename = "/input_img.png"
-=======
-filename = "./input_img.png"
->>>>>>> b990ba7dd527d793cf9cdd41f1a5e3813aa726f0
 img = Image.open(filename)
 
 
