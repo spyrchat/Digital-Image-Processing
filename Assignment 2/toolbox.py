@@ -85,7 +85,7 @@ H, L, edges = my_hough_transform(img_grayscale, d_rho, d_theta, n)
 
 # Plot the Hough Transform accumulator array
 plt.figure(figsize=(10, 10))
-plt.imshow(H, cmap='gray', aspect='auto', extent=[-np.pi / 2, np.pi / 2, -np.hypot(img_grayscale.shape[0], img_grayscale.shape[1]), np.hypot(img_grayscale.shape[0], img_grayscale.shape[1])])
+plt.imshow(H, cmap='gray')
 plt.title('Hough Transform Accumulator')
 plt.xlabel('Theta (radians)')
 plt.ylabel('Rho (pixels)')
