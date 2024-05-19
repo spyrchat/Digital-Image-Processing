@@ -2,38 +2,36 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 from skimage import feature
+import math
+from PIL import Image
 def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: int):
     # Image dimensions
-    height, width = img_binary.shape
-    
+    height,width = np.shape(img_binary)
     # Step 2: Define the range of rho and theta
     max_rho = int(np.hypot(height, width))  # Maximum possible value of rho
     thetas = np.arange(-np.pi / 2, np.pi / 2, d_theta)  # Range of theta values
     rhos = np.arange(-max_rho, max_rho, d_rho)  # Range of rho values
     
     # Step 3: Initialize the accumulator array
-    accumulator = np.zeros((len(rhos), len(thetas)), dtype=int)
+    H = np.zeros((len(rhos), len(thetas)), dtype=int)
     print("Accumulator array initialized.")
-
-    # Step 4: Get the indices of the edge points
-    y_idxs, x_idxs = np.nonzero(img_binary)  # Get the coordinates of edge points
-
-    # Precompute cosine and sine of thetas
-    cos_thetas = np.cos(thetas)
-    sin_thetas = np.sin(thetas)
     
     # Step 5: Populate the accumulator array using vectorized operations
-    for y, x in zip(y_idxs, x_idxs):
-        rho_vals = x * cos_thetas + y * sin_thetas
-        rho_indices = np.round((rho_vals - rhos[0]) / d_rho).astype(int)
-        valid_indices = (rho_indices >= 0) & (rho_indices < len(rhos))
-        accumulator[rho_indices[valid_indices], np.arange(len(thetas))[valid_indices]] += 1
+    for x in range(width):
+            for y in range(height):
+                if img_binary[y, x] == 1:
+                    for j in range(len(thetas)-1):
+                        theta = (thetas[j] + thetas[j+1]) /2
+                        rho = x * math.cos(theta) + y * math.sin(theta)
+                        #if 0<= rho <2*max_rho:
+                        rho_idx = int((rho+max_rho) / d_rho)
+                        H[rho_idx, j] += 1
     
     print("Accumulator array populated.")
 
     # Step 6: Find the n highest peaks in the accumulator array
-    flat_indices = np.argpartition(accumulator.ravel(), -n)[-n:]
-    peak_indices = np.column_stack(np.unravel_index(flat_indices, accumulator.shape))
+    flat_indices = np.argpartition(H.ravel(), -n)[-n:]
+    peak_indices = np.column_stack(np.unravel_index(flat_indices, H.shape))
     
     # Extract the rho and theta values for the strongest lines
     rho_theta_pairs = [(rhos[rho_idx], thetas[theta_idx]) for rho_idx, theta_idx in peak_indices]
@@ -44,12 +42,11 @@ def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: in
     L = np.array(rho_theta_pairs)
     
     # Count the number of points not part of the n strongest lines
-    res = np.sum(img_binary) - np.sum(accumulator)
+    res = np.sum(img_binary) - np.sum(H)
     
-    return accumulator, L, res
+    return H, L, res
 
 def draw_lines_on_image(image, lines, color=(0, 255, 0), thickness=2):
-    height, width = image.shape[:2]
     for rho, theta in lines:
         a = np.cos(theta)
         b = np.sin(theta)
@@ -62,58 +59,55 @@ def draw_lines_on_image(image, lines, color=(0, 255, 0), thickness=2):
         y2 = int(y0 - 1000 * (a))
         cv2.line(image, (x1, y1), (x2, y2), color, thickness)
 
-# Load the grayscale image
-img_path = 'Assignment 2/im2.jpg'
-img_grayscale = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+if __name__ == "__main__":
+    # Load the grayscale image
+    img_path = 'Assignment 2/im2.jpg'
+    img = Image.open(fp=img_path)
+    img = img.resize((510, 660))
+    # Keep only the Luminance component of the image
+    img_grayscale = img.convert("L")
+    img_grayscale = np.array(img_grayscale)
+    # Perform edge detection using Canny edge detector from OpenCV
+    print("Edge detection completed.")
 
-# Check if the image is loaded correctly
-if img_grayscale is None:
-    raise FileNotFoundError("The image file could not be loaded. Please check the path and the file.")
-print("Image loaded successfully.")
+    # Convert the edge-detected image to binary using thresholding
+    img_canny = feature.canny(img_grayscale, sigma=4, low_threshold=10, high_threshold=20)
 
-# Optionally reduce the resolution to speed up processing
-img_grayscale = cv2.resize(img_grayscale, (img_grayscale.shape[1] // 8, img_grayscale.shape[0] // 8))
-img_grayscale = np.array(img_grayscale)
-# Perform edge detection using Canny edge detector from OpenCV
-# edges = cv2.Canny(img_grayscale, 50, 150)
-print("Edge detection completed.")
+    # Parameters
+    d_rho = 1
+    d_theta = np.pi / 180
+    n = 40
+    max_rho = int(np.hypot(img_grayscale.shape[0], img_grayscale.shape[1]))
+    thetas = np.arange(-np.pi / 2, np.pi / 2, d_theta)
+    rhos = np.arange(-max_rho, max_rho, d_rho)
+    # Perform Hough Transform
+    H, L, res = my_hough_transform(img_canny, d_rho, d_theta, n)
+    print("H: ",H)
+    # Plot the Hough Transform accumulator array and highlight the peaks
+    plt.figure(figsize=(10, 10))
+    plt.imshow(H, cmap='gray', extent=[np.rad2deg(thetas[0]), np.rad2deg(thetas[-1]), rhos[-1], rhos[0]], aspect='auto')
+    plt.scatter(np.rad2deg(L[:, 1]), L[:, 0], color='red', s=50, edgecolors='yellow')  # Highlight peaks
+    plt.title('Hough Transform Accumulator')
+    plt.xlabel('Theta (degrees)')
+    plt.ylabel('Rho (pixels)')
+    plt.show()
+    # Display the original image with edge points highlighted
 
-# Convert the edge-detected image to binary using thresholding
-img_canny = feature.canny(img_grayscale, sigma=4, low_threshold=10, high_threshold=20)
+    y_idxs, x_idxs = np.nonzero(img_canny)
+    plt.figure(figsize=(10, 10))
+    plt.imshow(cv2.cvtColor(img_grayscale, cv2.COLOR_GRAY2RGB))
+    plt.scatter(x_idxs, y_idxs, color='red', s=1)  # Highlight edge points
+    plt.title('Original Image with Edge Points')
+    plt.show()
 
+    # Draw the detected lines on the original image
+    img_with_lines = cv2.cvtColor(img_grayscale, cv2.COLOR_GRAY2BGR)
+    draw_lines_on_image(img_with_lines, L)
 
-# Parameters
-d_rho = 1
-d_theta = np.pi / 180
-n = 40
+    # Display the original image with detected lines
+    plt.figure(figsize=(10, 10))
+    plt.imshow(cv2.cvtColor(img_with_lines, cv2.COLOR_BGR2RGB))
+    plt.title('Detected Lines on Original Image')
+    plt.show()
 
-# Perform Hough Transform
-H, L, res = my_hough_transform(img_canny, d_rho, d_theta, n)
-print("H: ",H)
-# Plot the Hough Transform accumulator array
-plt.figure(figsize=(10, 10))
-plt.imshow(H, cmap='gray')
-plt.title('Hough Transform Accumulator')
-plt.xlabel('Theta (radians)')
-plt.ylabel('Rho (pixels)')
-plt.show()
-
-# Display the original image with edge points highlighted
-y_idxs, x_idxs = np.nonzero(img_canny)
-plt.figure(figsize=(10, 10))
-plt.imshow(cv2.cvtColor(img_grayscale, cv2.COLOR_GRAY2RGB))
-plt.scatter(x_idxs, y_idxs, color='lightgray', s=0.5)  # Highlight edge points
-plt.title('Original Image with Edge Points')
-plt.show()
-
-# Draw the detected lines on the original image
-img_with_lines = cv2.cvtColor(img_grayscale, cv2.COLOR_GRAY2BGR)
-draw_lines_on_image(img_with_lines, L)
-
-# Display the original image with detected lines
-plt.figure(figsize=(10, 10))
-plt.imshow(cv2.cvtColor(img_with_lines, cv2.COLOR_BGR2RGB))
-plt.title('Detected Lines on Original Image')
-plt.show()
-
-print(f"Number of points not part of the {n} strongest lines: {res}")
+    print(f"Number of points not part of the {n} strongest lines: {res}")
