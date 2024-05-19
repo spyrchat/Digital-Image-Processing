@@ -3,30 +3,6 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import convolve
 import cv2
 
-def my_corner_harris(img, k=0.04, sigma=1.0):
-    gaussian_window = int(np.round(4 * sigma))
-    
-    W = img.shape[1]
-    H = img.shape[0]
-    R = np.zeros((H, W))
-    I1, I2 = compute_gradients(img)
-
-    for p1 in range(H):
-        for p2 in range(W):
-            M = np.zeros((2, 2))
-            for u1 in range(-gaussian_window // 2, gaussian_window // 2 + 1):
-                for u2 in range(-gaussian_window // 2, gaussian_window // 2 + 1):
-                    if 0 <= p1 + u1 < H and 0 <= p2 + u2 < W:
-                        w = np.exp(- (u1**2 + u2**2) / (2 * sigma**2))
-                        A11 = I1[p1 + u1, p2 + u2]**2
-                        A12 = I1[p1 + u1, p2 + u2] * I2[p1 + u1, p2 + u2]
-                        A21 = A12
-                        A22 = I2[p1 + u1, p2 + u2]**2
-                        A = np.array([[A11, A12], [A21, A22]])
-                        M += w * A
-            R[p1, p2] = np.linalg.det(M) - k * (np.trace(M)**2)
-    return R
-
 def compute_gradients(img):
     sobel_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
     sobel_y = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
@@ -36,7 +12,48 @@ def compute_gradients(img):
     
     return I1, I2
 
-def my_corner_peaks(harris_response, rel_threshold=0.1):
+def gaussian_weight(x1, x2, sigma):
+    return np.exp(- (x1**2 + x2**2) / (2 * sigma**2))
+
+def my_corner_harris(img, k=0.04, sigma=1.0):
+    I1, I2 = compute_gradients(img)
+    
+    # Compute the second moment matrix components
+    Ixx = I1**2
+    Iyy = I2**2
+    Ixy = I1 * I2
+    
+    # Dimensions of the image
+    H, W = img.shape
+
+    # Initialize the weighted sums
+    Mxx = np.zeros((H, W))
+    Myy = np.zeros((H, W))
+    Mxy = np.zeros((H, W))
+
+    window_size = int(4 * sigma + 1)
+    half_window = window_size // 2
+
+    for u1 in range(-half_window, half_window + 1):
+        for u2 in range(-half_window, half_window + 1):
+            w = gaussian_weight(u1, u2, sigma)
+            shifted_Ixx = np.roll(Ixx, shift=(u1, u2), axis=(0, 1))
+            shifted_Iyy = np.roll(Iyy, shift=(u1, u2), axis=(0, 1))
+            shifted_Ixy = np.roll(Ixy, shift=(u1, u2), axis=(0, 1))
+            Mxx += w * shifted_Ixx
+            Myy += w * shifted_Iyy
+            Mxy += w * shifted_Ixy
+    
+    # Compute the determinant and trace of the matrix M
+    det_M = Mxx * Myy - Mxy**2
+    trace_M = Mxx + Myy
+    
+    # Compute the Harris response
+    R = det_M - k * (trace_M**2)
+    
+    return R
+
+def my_corner_peaks(harris_response, rel_threshold=0.2):
     threshold = harris_response.max() * rel_threshold
     W = harris_response.shape[1]
     H = harris_response.shape[0]
@@ -46,15 +63,7 @@ def my_corner_peaks(harris_response, rel_threshold=0.1):
         for p2 in range(W):
             if harris_response[p1, p2] > threshold:
                 # Check if this is a local maximum
-                local_max = True
-                for i in range(max(0, p1-1), min(H, p1+2)):
-                    for j in range(max(0, p2-1), min(W, p2+2)):
-                        if harris_response[i, j] > harris_response[p1, p2]:
-                            local_max = False
-                            break
-                    if not local_max:
-                        break
-                if local_max:
+                if (harris_response[p1, p2] == np.max(harris_response[max(0, p1-1):min(H, p1+2), max(0, p2-1):min(W, p2+2)])):
                     corner_locations.append((p1, p2))
 
     return np.array(corner_locations)
@@ -69,14 +78,11 @@ if __name__ == "__main__":
         raise FileNotFoundError("The image file could not be loaded. Please check the path and the file.")
     print("Image loaded successfully.")
 
-# Optionally reduce the resolution to speed up processing
-img_grayscale = cv2.resize(img, (img.shape[1] // 8, img.shape[0] // 8))
-
-if img.ndim == 3:
-    img = np.dot(img[..., :3], [0.2989, 0.5870, 0.1140])
+    # Optionally reduce the resolution to speed up processing
+    img = cv2.resize(img, (img.shape[1] // 8, img.shape[0] // 8))
 
     R = my_corner_harris(img, k=0.04, sigma=1.0)
-    corners = my_corner_peaks(R, rel_threshold=0.1)
+    corners = my_corner_peaks(R, rel_threshold=0.2)
     
     plt.imshow(img, cmap='gray')
     plt.scatter(corners[:, 1], corners[:, 0], c='r', s=5)
