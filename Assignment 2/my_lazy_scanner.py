@@ -102,14 +102,34 @@ print("Corners :", corners)
 for intersection in normalized_intersections:
     for corner in corners:
         distance = np.sqrt((intersection[0] - corner[1])**2 + (intersection[1] - corner[0])**2)
-        if distance < 5:  # Adjust the distance threshold if necessary
+        if distance < 2.5:  # Adjust the distance threshold if necessary
             filtered_intersections.append(corner.astype(int))
 
-print("Filtered Intersections :", filtered_intersections)
+filtered_intersections = np.array(filtered_intersections)
+
+# Define a function to remove points that are too close to each other
+def remove_close_points(points, min_distance):
+    filtered_points = []
+    for point in points:
+        if all(np.linalg.norm(point - np.array(fp)) >= min_distance for fp in filtered_points):
+            filtered_points.append(point)
+    return np.array(filtered_points)
+
+# Define the minimum distance threshold
+min_distance = 5  # Adjust the distance threshold to 5 pixels
+
+# Sort points for consistent order
+filtered_intersections = filtered_intersections[np.lexsort((filtered_intersections[:, 1], filtered_intersections[:, 0]))]
+
+# Remove close points from filtered_intersections
+unique_filtered_intersections = remove_close_points(filtered_intersections, min_distance)
+
+print("Filtered Intersections (after removal):", unique_filtered_intersections)
+
 
 plt.figure(figsize=(10, 8))
 plt.imshow(img, cmap='gray')
-for point in filtered_intersections:
+for point in unique_filtered_intersections:
     plt.plot(point[1], point[0], 'bo')  # 'bo' for blue circles
 
 plt.figure(figsize=(10, 8))
@@ -118,3 +138,5 @@ for point in corners:
     plt.plot(point[1], point[0], 'ro')  # 'ro' for red circles
 plt.title('Corners')
 plt.show()
+
+
