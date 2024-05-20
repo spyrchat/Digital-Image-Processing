@@ -10,6 +10,7 @@ def calculate_new_dimensions(width, height, angle):
 
 def bilinear_interpolate(img, x, y):
     H, W = img.shape[:2]
+    channels = img.shape[2] if len(img.shape) > 2 else None
     x1, y1 = int(np.floor(x)), int(np.floor(y))
     x2, y2 = min(x1 + 1, W - 1), min(y1 + 1, H - 1)
     
@@ -24,16 +25,32 @@ def bilinear_interpolate(img, x, y):
     R1 = (x2 - x) * Q11 + (x - x1) * Q21
     R2 = (x2 - x) * Q12 + (x - x1) * Q22
     P = (y2 - y) * R1 + (y - y1) * R2
+    temp = 0
+    if y + 1 < H and y + 1 >= 0 and x < W and x >= 0:
+        temp += img[y + 1, x]
+    if x - 1 < W and x - 1 >= 0 and y < H and y >= 0:
+        temp += img[y, x - 1]
+    if y - 1 < H and y - 1 >= 0 and x < W and x >= 0:
+        temp += img[y - 1, x]
+    if x + 1 < W and x + 1 >= 0 and y < H and y >= 0:
+        temp += img[y, x + 1]
+    
+    P[y, x] = temp // 4
     
     return P
 
 def rot_img(img, angle):
     H, W = img.shape[:2]
-    C = 1 if img.ndim == 2 else img.shape[2]
+    C = None if img.ndim == 2 else img.shape[2]
 
     new_W, new_H = calculate_new_dimensions(W, H, angle)
     rotated_img = np.zeros((new_H, new_W), dtype=img.dtype) if C == 1 else np.zeros((new_H, new_W, C), dtype=img.dtype)
     
+    if (C):
+        rotated_img = np.zeros((new_H, new_W, C), dtype=img.dtype)
+    else: 
+        rotated_img = np.zeros((new_H, new_W), dtype=img.dtype)
+
     cx, cy = W // 2, H // 2
     new_cx, new_cy = new_W // 2, new_H // 2
     

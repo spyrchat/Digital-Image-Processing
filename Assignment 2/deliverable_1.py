@@ -61,9 +61,9 @@ def draw_lines_on_image(image, lines, color=(0, 255, 0), thickness=2):
 
 if __name__ == "__main__":
     # Load the grayscale image
-    img_path = 'Assignment 2/im2.jpg'
+    img_path = 'Assignment 2/im3.jpg'
     img = Image.open(fp=img_path)
-    img = img.resize((510, 660))
+    img = img.resize((215, 360))
     # Keep only the Luminance component of the image
     img_grayscale = img.convert("L")
     img_grayscale = np.array(img_grayscale)
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     # Parameters
     d_rho = 1
     d_theta = np.pi / 180
-    n = 40
+    n = 20
     max_rho = int(np.hypot(img_grayscale.shape[0], img_grayscale.shape[1]))
     thetas = np.arange(-np.pi / 2, np.pi / 2, d_theta)
     rhos = np.arange(-max_rho, max_rho, d_rho)

@@ -1,15 +1,15 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-from skimage import feature
 from PIL import Image
+from sklearn.cluster import DBSCAN
 from deliverable_1 import my_hough_transform
-from deliverable_2 import my_corner_harris, my_corner_peaks
-
+from fast_harris import my_corner_harris, my_corner_peaks
+from skimage import feature
 # Load and preprocess the image
 img_path = 'Assignment 2/im3.jpg'
 img = Image.open(fp=img_path)
-img = img.resize((215, 360))
+img = img.resize((510, 660))
 
 # Convert the image to grayscale
 img_grayscale = img.convert("L")
@@ -20,13 +20,13 @@ img_canny = feature.canny(img_grayscale, sigma=4, low_threshold=10, high_thresho
 print("Edge detection completed.")
 
 # Perform Harris corner detection and find corner peaks
-R = my_corner_harris(img_grayscale / 255.0, k=0.04, sigma=2.0)
+R = my_corner_harris(img_grayscale, k=0.04, sigma=2.0)
 corners = my_corner_peaks(R, rel_threshold=0.005)
 
 # Parameters for Hough Transform
 d_rho = 1
 d_theta = np.pi / 180
-n = 20
+n = 30
 
 # Perform Hough Transform
 H, L, res = my_hough_transform(img_canny, d_rho, d_theta, n)
@@ -101,20 +101,38 @@ print("Corners :", corners)
 # Calculate distance and filter intersections
 for intersection in normalized_intersections:
     for corner in corners:
-        distance = np.sqrt((intersection[0] - corner[1])**2 + (intersection[1] - corner[0])**2)
-        if distance < 5:  # Adjust the distance threshold if necessary
-            filtered_intersections.append(corner.astype(int))
+        distance = np.sqrt((intersection[0] - corner[0])**2 + (intersection[1] - corner[1])**2)
+        if distance < 10:  # Adjust the distance threshold if necessary
+            filtered_intersections.append(intersection.astype(int))
 
 print("Filtered Intersections :", filtered_intersections)
 
-plt.figure(figsize=(10, 8))
-plt.imshow(img, cmap='gray')
-for point in filtered_intersections:
-    plt.plot(point[1], point[0], 'bo')  # 'bo' for blue circles
+def remove_close_points(points, min_distance):
+    if not points:
+        return []
+
+    # Sort points for consistent order
+    points = sorted(points, key=lambda x: (x[0], x[1]))
+    unique_points = [points[0]]
+
+    for point in points[1:]:
+        if all(np.linalg.norm(point - np.array(p)) >= min_distance for p in unique_points):
+            unique_points.append(point)
+
+    return unique_points
+
+# Define the minimum distance threshold
+min_distance = 10
+
+# Remove close points from filtered intersections
+unique_filtered_intersections = remove_close_points(filtered_intersections, min_distance)
+
+print("Filtered Intersections (after removal):", unique_filtered_intersections)
+
 
 plt.figure(figsize=(10, 8))
 plt.imshow(img, cmap='gray')
-for point in corners:
-    plt.plot(point[1], point[0], 'ro')  # 'ro' for red circles
-plt.title('Corners')
+for point in unique_filtered_intersections:
+    plt.plot(point[0], point[1], 'ro')  # 'ro' for red circles
+plt.title('Filtered Intersections on Original Image')
 plt.show()

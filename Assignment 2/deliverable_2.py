@@ -64,9 +64,9 @@ def my_corner_peaks(harris_response, rel_threshold=0.1):
 
 # Example usage
 if __name__ == "__main__":
-    img_path = 'Assignment 2/im2.jpg'
+    img_path = 'Assignment 2/im3.jpg'
     img = Image.open(fp=img_path)
-    img = img.resize((510, 660))
+    img = img.resize((215, 360))
     # Keep only the Luminance component of the image
     img_gray = img.convert("L")
 
