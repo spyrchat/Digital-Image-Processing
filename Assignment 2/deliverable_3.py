@@ -8,6 +8,21 @@ def calculate_new_dimensions(width, height, angle):
     new_height = int(abs(width * np.sin(angle)) + abs(height * np.cos(angle)))
     return new_width, new_height
 
+def bilinear_interpolate(img, x, y):
+    x1, y1 = int(np.floor(x)), int(np.floor(y))
+    x2, y2 = min(x1 + 1, img.shape[1] - 1), min(y1 + 1, img.shape[0] - 1)
+
+    Q11 = img[y1, x1]
+    Q21 = img[y1, x2]
+    Q12 = img[y2, x1]
+    Q22 = img[y2, x2]
+
+    R1 = (x2 - x) * Q11 + (x - x1) * Q21
+    R2 = (x2 - x) * Q12 + (x - x1) * Q22
+    P = (y2 - y) * R1 + (y - y1) * R2
+
+    return P
+
 def rot_img(img, angle):
     H, W, C = img.shape  # Height, Width, Channels
     new_W, new_H = calculate_new_dimensions(W, H, angle)
@@ -23,12 +38,9 @@ def rot_img(img, angle):
             x_og = (x - new_cx) * np.cos(angle_rad) - (y - new_cy) * np.sin(angle_rad) + cx
             y_og = (x - new_cx) * np.sin(angle_rad) + (y - new_cy) * np.cos(angle_rad) + cy
             
-            x_og = int(np.round(x_og))
-            y_og = int(np.round(y_og))
-            
             if 0 <= x_og < W and 0 <= y_og < H:
-                rotated_img[y, x] = img[y_og, x_og]
-
+                rotated_img[y, x] = bilinear_interpolate(img, x_og, y_og)
+    
     return rotated_img
 
 def main(image_path, angle):
@@ -44,22 +56,16 @@ def main(image_path, angle):
     rotated_img = Image.fromarray(rotated_img_array.astype(np.uint8))
 
     # Display the original and rotated images
-    plt.subplot(1, 2, 1)
-    plt.title("Original Image")
-    plt.imshow(img_array)
+    fig, ax = plt.subplots(1, 2, figsize=(15, 7))
+    ax[0].set_title("Original Image")
+    ax[0].imshow(img_array)
 
-    plt.subplot(1, 2, 2)
-    plt.title(f"Rotated Image ({angle}°)")
-    plt.imshow(rotated_img_array)
+    ax[1].set_title(f"Rotated Image ({angle}°)")
+    ax[1].imshow(rotated_img_array)
 
     plt.show()
 
 if __name__ == "__main__":
-    image_path = 'Assignment 2\im2.jpg'  # Path to the uploaded image
-    # angle = 45  # Rotation angle in degrees
+    image_path = 'Assignment 2/im2.jpg'  # Path to the uploaded image
     main(image_path, 54)
     main(image_path, 213)
-
-
-
-
