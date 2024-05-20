@@ -11,7 +11,6 @@ def my_corner_harris(img, k=0.04, sigma=1.0):
     I12 = I1 * I2
     I22 = I2**2
     # Initialize the response matrix
-    # Initialize the response matrix
     R = np.zeros((H, W))
 
     # Define the range for the Gaussian window
@@ -24,9 +23,6 @@ def my_corner_harris(img, k=0.04, sigma=1.0):
     # Calculate the Gaussian weights
     w = np.exp(- (u1**2 + u2**2) / (2 * sigma**2))
 
-    # Pad the images to handle the border effects
-    padded_I1 = np.pad(I1, half_window, mode='edge')
-    padded_I2 = np.pad(I2, half_window, mode='edge')
     for p1 in range(H):
         for p2 in range(W):
            M = np.zeros((2, 2))
