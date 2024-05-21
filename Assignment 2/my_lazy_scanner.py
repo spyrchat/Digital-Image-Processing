@@ -6,6 +6,8 @@ from PIL import Image
 from deliverable_1 import my_hough_transform
 from deliverable_2 import my_corner_harris, my_corner_peaks
 from sklearn.cluster import DBSCAN
+from itertools import combinations
+import math
 
 # Load and preprocess the image
 img_path = 'Assignment 2/im1.jpg'
@@ -22,7 +24,7 @@ print("Edge detection completed.")
 
 # Perform Harris corner detection and find corner peaks
 R = my_corner_harris(img_grayscale / 255.0, k=0.04, sigma=2.0)
-corners = my_corner_peaks(R, rel_threshold=0.005)
+corners = my_corner_peaks(R, rel_threshold=0.01)
 
 # Parameters for Hough Transform
 d_rho = 1
@@ -64,21 +66,44 @@ def find_intersection(line1, line2):
         # Solve the system of equations
         intersection_point = np.linalg.solve(A, B)
         return intersection_point
+def are_perpendicular(theta1, theta2):
+    """
+    Check if two lines in polar coordinates are perpendicular.
+
+    Parameters:
+    theta1 (float): The angle of the first line in radians.
+    theta2 (float): The angle of the second line in radians.
+
+    Returns:
+    bool: True if the lines are perpendicular, False otherwise.
+    """
+    # Normalize the angles to be within the range [0, 2*pi)
+    theta1 = theta1 % (2 * math.pi)
+    theta2 = theta2 % (2 * math.pi)
+    
+    # Compute the absolute difference between the angles
+    diff = abs(theta1 - theta2)
+    
+    # Check if the difference is pi/2 or 3*pi/2
+    return math.isclose(diff, math.pi / 2) or math.isclose(diff, 3 * math.pi / 2)
 
 # Convert detected lines from polar to Cartesian
 lines = convert_lines_polar_to_cartesian(L)
 
-# List to store intersection points
 intersections = []
-
-# Find intersections between all pairs of lines
 for i in range(len(lines)):
     for j in range(i + 1, len(lines)):  # Ensure j > i to avoid duplicate checks
-        temp = find_intersection(lines[i], lines[j])
-        if temp is not None:
-            # Floor the intersection point and convert to integers
-            temp = np.floor(temp).astype(int)
-            intersections.append(temp)
+        # Check if the angle difference or its complement is within the specified bounds
+        if are_perpendicular(L[i][1], L[j][1]):
+            print(f"Lines {i} and {j} are close to perpendicular.")
+            temp = find_intersection(lines[i], lines[j])
+            if temp is not None:
+                # Floor the intersection point and convert to integers
+                temp = np.floor(temp).astype(int)
+                intersections.append(temp)
+
+print(f"Intersections: {intersections}")
+        
 
 print("Intersections: ", intersections)
 H,W = np.shape(img_grayscale)
@@ -167,55 +192,3 @@ plt.title('Original Image with Key Points')
 plt.axis('off')
 plt.show()
 
-# Define bounding box
-x_min = int(min(highest_leftmost[1], lowest_leftmost[1]))
-x_max = int(max(highest_rightmost[1], lowest_rightmost[1]))
-y_min = int(min(lowest_leftmost[0], lowest_rightmost[0]))
-y_max = int(max(highest_leftmost[0], highest_rightmost[0]))
-
-# Function to find the separator line (uniform color) from top to bottom
-def find_separator_line_top_to_bottom(img_array, x_min, x_max, y_start, y_end):
-    for y in range(y_start, y_end):
-        if np.all(img_array[y, x_min:x_max] == img_array[y, x_min]):
-            return y
-    return y_end
-
-# Function to find the separator line (uniform color) from bottom to top
-def find_separator_line_bottom_to_top(img_array, x_min, x_max, y_start, y_end):
-    for y in range(y_start, y_end, -1):
-        if np.all(img_array[y, x_min:x_max] == img_array[y, x_min]):
-            return y
-    return y_end
-
-# Define the initial crop box based on known image dimensions
-x_min = 0
-x_max = img_array.shape[1]
-
-# Find the separator line for the first (top) image
-separator_line_top = find_separator_line_top_to_bottom(img_array, x_min, x_max, 0, img_array.shape[0])
-print("Separator line for the top image:", separator_line_top)
-
-# Find the separator line for the second (bottom) image starting from bottom to top
-separator_line_bottom = find_separator_line_bottom_to_top(img_array, x_min, x_max, img_array.shape[0] - 1, 0)
-print("Separator line for the bottom image:", separator_line_bottom)
-
-# Ensure separator lines are valid and adjust cropping logic
-if separator_line_top < separator_line_bottom:
-    # Crop the first image (top part) from the top to the separator line
-    top_image = img_array[0:separator_line_top, x_min:x_max]
-    
-    # Crop the second image (bottom part) from the separator line to the bottom
-    bottom_image = img_array[separator_line_top:separator_line_bottom, x_min:x_max]
-    
-    # Add the cropped images to the list
-    cropped_images = [top_image, bottom_image]
-
-    # Display the cropped images
-    for i, cropped_img in enumerate(cropped_images):
-        plt.figure()
-        plt.imshow(cropped_img)
-        plt.title(f'Cropped Image {i + 1}')
-        plt.axis('off')
-        plt.show()
-else:
-    print("No valid separator lines found.")
