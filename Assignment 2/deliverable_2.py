@@ -97,9 +97,9 @@ def my_corner_peaks(harris_response, rel_threshold=0.1):
 
 # Example usage
 if __name__ == "__main__":
-    img_path = 'Assignment 2/im3.jpg'
+    img_path = 'Assignment 2/im5.jpg'
     img = Image.open(fp=img_path)
-    img = img.resize((510, 660))
+    # img = img.resize((510, 660))
     img = img.convert("L")
     # Obtain the underlying np array
     image = np.array(img)
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     image = image / 255.0
 
     R = my_corner_harris(image, k=0.04, sigma=2.0,method='Fast')
-    corners = my_corner_peaks(R, rel_threshold=0.005)
+    corners = my_corner_peaks(R, rel_threshold=0.0005)
 
     plt.imshow(image, cmap='gray')
     if corners.size > 0:  # Ensure corners array is not empty before plotting

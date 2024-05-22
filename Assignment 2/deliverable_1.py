@@ -4,41 +4,73 @@ import matplotlib.pyplot as plt
 from skimage import feature
 import math
 from PIL import Image
-def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: int):
+
+## Hough Transform is implemented both as the slides of the lesson indicate and with the use of numpy operations ##
+## so it can run in a reasonable ammount of time given the complexity of the algorithm on high resolution images ##
+
+def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: int, method='Fast'):
     # Image dimensions
     height,width = np.shape(img_binary)
     #Rho max is the Hypotenuse of the triangle that is formed with H and W as vertical lines
     max_rho = int(np.hypot(height, width))
     thetas = np.arange(-np.pi / 2, np.pi / 2, d_theta)  # Range of theta values
     rhos = np.arange(-max_rho, max_rho, d_rho)  # Range of rho values
+    if method == 'Fast':
+        H = np.zeros((len(rhos), len(thetas)), dtype=int)
+        # Get the indices of the binary image where the pixel value is 1
+        y_idxs, x_idxs = np.nonzero(img_binary)
+        # Compute the midpoints of the thetas
+        theta_midpoints = (thetas[:-1] + thetas[1:]) / 2
+        # Compute the cosines and sines of the theta midpoints
+        cos_thetas = np.cos(theta_midpoints)
+        sin_thetas = np.sin(theta_midpoints)
+        # Calculate the rho values for all (x, y) pairs and theta midpoints
+        rho_values = np.outer(x_idxs, cos_thetas) + np.outer(y_idxs, sin_thetas)
+        # Quantize the rho values to get the corresponding rho indices
+        rho_indices = ((rho_values + max_rho) / d_rho).astype(int)
+        # Accumulate the votes in the accumulator array H
+        for i in range(len(theta_midpoints)):
+            np.add.at(H[:, i], rho_indices[:, i], 1)
+        # Find the n highest peaks in the accumulator array
+        flat_indices = np.argpartition(H.ravel(), -n)[-n:]
+        peak_indices = np.column_stack(np.unravel_index(flat_indices, H.shape)) 
+        # Extract the rho and theta values for the strongest lines
+        rho_theta_pairs = [(rhos[rho_idx], thetas[theta_idx]) for rho_idx, theta_idx in peak_indices]
+        # Create the output parameter list for the strongest lines
+        L = np.array(rho_theta_pairs)
+        img_pixels = height * width
+        # Count the number of points not part of the n strongest lines
+        res = img_pixels - np.sum(H)
+        return H, L, res
     
-    #H has the role of the accumulator array
-    H = np.zeros((len(rhos), len(thetas)), dtype=int)
-   #H is populated in a way that every single cell has accumulated the "votes" of pixel in the image where the line (rho, theta) passes
-    for x in range(width):
-            for y in range(height):
-                if img_binary[y, x] == 1:
-                    for j in range(len(thetas)-1):
-                        theta = (thetas[j] + thetas[j+1]) /2
-                        rho = x * math.cos(theta) + y * math.sin(theta)
-                        rho_idx = int((rho+max_rho) / d_rho)
-                        H[rho_idx, j] += 1
-    
+    if method == 'ByTheBook' :
+        #H has the role of the accumulator array
+        H = np.zeros((len(rhos), len(thetas)), dtype=int)
+        #H is populated in a way that every single cell has accumulated the "votes" of pixel in the image where the line (rho, theta) passes
+        for x in range(width):
+                for y in range(height):
+                    if img_binary[y, x] == 1:
+                        for j in range(len(thetas)-1):
+                            theta = (thetas[j] + thetas[j+1]) /2
+                            rho = x * math.cos(theta) + y * math.sin(theta)
+                            rho_idx = int((rho+max_rho) / d_rho)
+                            H[rho_idx, j] += 1
+        
 
-    # Find the n highest peaks in the accumulator array
-    flat_indices = np.argpartition(H.ravel(), -n)[-n:]
-    peak_indices = np.column_stack(np.unravel_index(flat_indices, H.shape))
+        # Find the n highest peaks in the accumulator array
+        flat_indices = np.argpartition(H.ravel(), -n)[-n:]
+        peak_indices = np.column_stack(np.unravel_index(flat_indices, H.shape))
+        
+        # Extract the rho and theta values for the strongest lines
+        rho_theta_pairs = [(rhos[rho_idx], thetas[theta_idx]) for rho_idx, theta_idx in peak_indices]
+        # Create the output parameter list for the strongest lines
+        L = np.array(rho_theta_pairs)
+        
+        # Count the number of points not part of the n strongest lines
+        res = np.sum(img_binary) - np.sum(H)
+        
+        return H, L, res
     
-    # Extract the rho and theta values for the strongest lines
-    rho_theta_pairs = [(rhos[rho_idx], thetas[theta_idx]) for rho_idx, theta_idx in peak_indices]
-    # Create the output parameter list for the strongest lines
-    L = np.array(rho_theta_pairs)
-    
-    # Count the number of points not part of the n strongest lines
-    res = np.sum(img_binary) - np.sum(H)
-    
-    return H, L, res
-
 def draw_lines_on_image(image, lines, color=(0, 255, 0), thickness=2):
    # Iterate though each element in L to find the line equations that are represented in each cell of L
     for rho, theta in lines:
@@ -47,17 +79,17 @@ def draw_lines_on_image(image, lines, color=(0, 255, 0), thickness=2):
         x0 = a * rho
         y0 = b * rho
         # Extend the line by 1000 pixels in both directions to ensure it covers the entire image
-        x1 = int(x0 + 1000 * (-b))
-        y1 = int(y0 + 1000 * (a))
-        x2 = int(x0 - 1000 * (-b))
-        y2 = int(y0 - 1000 * (a))
+        x1 = int(x0 + 10000 * (-b))
+        y1 = int(y0 + 10000 * (a))
+        x2 = int(x0 - 10000 * (-b))
+        y2 = int(y0 - 10000 * (a))
         cv2.line(image, (x1, y1), (x2, y2), color, thickness)
 
 if __name__ == "__main__":
     # Load the grayscale image
-    img_path = 'Assignment 2/im4.jpg'
+    img_path = 'Assignment 2/im5.jpg'
     img = Image.open(fp=img_path)
-    img = img.resize((510, 660))
+    # img = img.resize((510, 660))
     img_grayscale = img.convert("L")
     img_grayscale = np.array(img_grayscale)
 
