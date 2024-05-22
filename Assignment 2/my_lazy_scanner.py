@@ -9,6 +9,7 @@ from deliverable_3 import my_img_rotation
 from itertools import combinations
 import math
 import os
+from sklearn.cluster import DBSCAN
 
 
 def polar_to_cartesian(rho, theta):
@@ -184,13 +185,38 @@ def rotate_points(points, angle, center, rotation_center):
 
 
 
-# Define a function to remove points that are too close to each other
-def remove_close_points(points, min_distance=20):
+def remove_close_points(points, eps=20, min_samples=1):
+    """
+    Removes points that are too close to each other using DBSCAN clustering.
+
+    Parameters:
+    points (np.ndarray): Array of points to filter.
+    eps (float): The maximum distance between two samples for them to be considered as in the same neighborhood.
+    min_samples (int): The number of samples in a neighborhood for a point to be considered as a core point.
+
+    Returns:
+    np.ndarray: Array of filtered points.
+    """
+    if len(points) == 0:
+        return np.array([])
+
+    db = DBSCAN(eps=eps, min_samples=min_samples).fit(points)
+    labels = db.labels_
+
+    unique_labels = set(labels)
     filtered_points = []
-    for point in points:
-        if all(np.linalg.norm(point - np.array(fp)) >= min_distance for fp in filtered_points):
-            filtered_points.append(point)
+
+    for label in unique_labels:
+        if label == -1:
+            continue  # Ignore noise points
+        class_member_mask = (labels == label)
+        cluster_points = points[class_member_mask]
+        centroid = cluster_points.mean(axis=0)
+        centroid = np.floor(centroid).astype(int)  # Use centroid of the cluster as the representative point
+        filtered_points.append(centroid)
+
     return np.array(filtered_points)
+
 def extract_quadrilateral_region(image, points):
     
     # Convert points to integer coordinates
@@ -210,7 +236,7 @@ def extract_quadrilateral_region(image, points):
 
 if __name__ == "__main__":
     # Load and preprocess the image
-    img_path = 'Assignment 2/im3.jpg'
+    img_path = 'Assignment 2/im2.jpg'
     img = Image.open(fp=img_path)
     img = img.resize((510, 660))
 
@@ -225,7 +251,7 @@ if __name__ == "__main__":
     # blurred_image = filters.gaussian(img_grayscale, sigma=1.5)
 
     # Perform edge detection using Canny edge detector from skimage
-    img_canny = feature.canny(img_grayscale, sigma=4, low_threshold=10, high_threshold=20)
+    img_canny = feature.canny(img_grayscale, sigma=2.5, low_threshold=10, high_threshold=50)  # Adjusted parameters
     # Perform Harris corner detection and find corner peaks
     R = my_corner_harris(img_grayscale / 255.0, k=0.05, sigma=3)
     corners = my_corner_peaks(R, rel_threshold=0.005)
@@ -237,7 +263,6 @@ if __name__ == "__main__":
 
     # Perform Hough Transform
     H, L, res = my_hough_transform(img_canny, d_rho, d_theta, n)
-    # Function to convert polar coordinates to Cartesian coordinates
 
     # Convert detected lines from polar to Cartesian
     lines = convert_lines_polar_to_cartesian(L)
@@ -246,16 +271,13 @@ if __name__ == "__main__":
 
     for i in range(len(lines)):
         for j in range(i + 1, len(lines)):  # Ensure j > i to avoid duplicate checks
-            # Check if the angle difference or its complement is within the specified bounds
-            if are_perpendicular(L[i][1], L[j][1]):
-                print(f"Lines {i} and {j} are close to perpendicular.")
+            # Check if the angle difference or its complement is within the specified bounds (tol_deg)
+            if are_perpendicular(L[i][1], L[j][1],tol_deg = 5):
                 temp = find_intersection(lines[i], lines[j])
                 if temp is not None:
                     # Floor the intersection point and convert to integers
                     temp = np.floor(temp).astype(int)
                     intersections.append(temp)
-
-    print(f"Intersections: {intersections}")
             
     H,W = np.shape(img_grayscale)
     normalized_intersections = []
@@ -267,8 +289,6 @@ if __name__ == "__main__":
         normalized_intersections.append((x_norm, y_norm))
     normalized_intersections = np.array(normalized_intersections)
 
-    print("Normalized Intersections: ", normalized_intersections)
-
     # List to store filtered intersections
     filtered_intersections = []
 
@@ -279,29 +299,29 @@ if __name__ == "__main__":
             if distance < 3:  # Adjust the distance threshold if necessary
                 filtered_intersections.append(corner.astype(int))
 
-    filtered_intersections = np.array(filtered_intersections)
+    filtered_intersections = np.array(filtered_intersections).astype(int)
 
     # Sort points for consistent order
     filtered_intersections = filtered_intersections[np.lexsort((filtered_intersections[:, 1], filtered_intersections[:, 0]))]
 
     # Remove close points from filtered_intersections
-    unique_filtered_intersections = remove_close_points(filtered_intersections)
+    unique_filtered_intersections = remove_close_points(filtered_intersections, eps=20)
 
     print("Filtered Intersections (after removal):", unique_filtered_intersections)
 
 
-    plt.figure(figsize=(10, 8))
-    plt.imshow(img, cmap='gray')
-    for point in unique_filtered_intersections:
-        plt.plot(point[1], point[0], 'bo')  # 'bo' for blue circles
-    plt.title('Filtered Intersections')
-    plt.figure(figsize=(10, 8))
-    plt.imshow(img, cmap='gray')
-    for point in corners:
-        plt.plot(point[1], point[0], 'ro')  # 'ro' for red circles
-    plt.title('Corners')
-    plt.show()
-    img_array = np.array(img)
+    # plt.figure(figsize=(10, 8))
+    # plt.imshow(img, cmap='gray')
+    # for point in unique_filtered_intersections:
+    #     plt.plot(point[1], point[0], 'bo')  # 'bo' for blue circles
+    # plt.title('Filtered Intersections')
+    # plt.figure(figsize=(10, 8))
+    # # plt.imshow(img, cmap='gray')
+    # for point in corners:
+    #     plt.plot(point[1], point[0], 'ro')  # 'ro' for red circles
+    # plt.title('Corners')
+    # plt.show()
+    # img_array = np.array(img)
 
     rectangles = find_rectangles(unique_filtered_intersections, 5)
     print(f"Number of individual images found: {len(rectangles)}")
@@ -309,10 +329,10 @@ if __name__ == "__main__":
 
     for idx, rect in enumerate(rectangles, start=1):
         img_grayscale = np.array(img)
-        plt.imshow(img_grayscale, cmap='gray')
-        plt.title('Harris with Detected Corners')
-        plt.scatter(rect[:, 1], rect[:, 0], color='red', marker='s', s=1)
-        plt.show()
+        # plt.imshow(img_grayscale, cmap='gray')
+        # plt.title('Harris with Detected Corners')
+        # plt.scatter(rect[:, 1], rect[:, 0], color='red', marker='s', s=1)
+        # plt.show()
 
         sorted_points = order_points(rect)
         angle = calculate_angle(sorted_points)
@@ -321,9 +341,9 @@ if __name__ == "__main__":
             height, width = img_grayscale.shape[:2]
 
             img_grayscale = my_img_rotation(img_grayscale, angle*(np.pi/180))
-            plt.imshow(img_grayscale, cmap='gray')
-            plt.title('Rotated Image')
-            plt.show()
+            # plt.imshow(img_grayscale, cmap='gray')
+            # plt.title('Rotated Image')
+            # plt.show()
 
             new_height, new_width = img_grayscale.shape[:2]
 
@@ -338,9 +358,9 @@ if __name__ == "__main__":
         
 
         region = extract_quadrilateral_region(img_grayscale, rect)
-        plt.imshow(region, cmap='gray')
-        plt.title('Region')
-        plt.show()
+        # plt.imshow(region, cmap='gray')
+        # plt.title('Region')
+        # plt.show()
         
         # Save the cropped image
         cropped_img = Image.fromarray(region)

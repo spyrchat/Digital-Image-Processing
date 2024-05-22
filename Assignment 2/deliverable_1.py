@@ -31,9 +31,6 @@ def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: in
     
     # Extract the rho and theta values for the strongest lines
     rho_theta_pairs = [(rhos[rho_idx], thetas[theta_idx]) for rho_idx, theta_idx in peak_indices]
-    print("Peaks detected in the accumulator array.")
-    print("Peak indices:", peak_indices)
-
     # Create the output parameter list for the strongest lines
     L = np.array(rho_theta_pairs)
     
@@ -58,7 +55,7 @@ def draw_lines_on_image(image, lines, color=(0, 255, 0), thickness=2):
 
 if __name__ == "__main__":
     # Load the grayscale image
-    img_path = 'Assignment 2/im2.jpg'
+    img_path = 'Assignment 2/im4.jpg'
     img = Image.open(fp=img_path)
     img = img.resize((510, 660))
     img_grayscale = img.convert("L")

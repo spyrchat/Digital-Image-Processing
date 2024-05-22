@@ -40,7 +40,7 @@ def bilinear_interpolate(img, x, y, C):
     interpolated_value = temp // count
 
     return interpolated_value
-
+#### The Angle should Be Given In RADIANS #####
 def my_img_rotation(img, angle):
     H, W = img.shape[:2]
     C = 1 if img.ndim == 2 else img.shape[2]
@@ -51,13 +51,12 @@ def my_img_rotation(img, angle):
     cx, cy = W // 2, H // 2
     new_cx, new_cy = new_W // 2, new_H // 2
     
-    angle_rad = np.deg2rad(angle)
     # The algorithm applies the inverse rotation to each pixel in the new image
     # to find its corresponding position in the original image.
     for y in range(new_H):
         for x in range(new_W):
-            x_og = int((x - new_cx) * np.cos(angle_rad) - (y - new_cy) * np.sin(angle_rad) + cx)
-            y_og = int((x - new_cx) * np.sin(angle_rad) + (y - new_cy) * np.cos(angle_rad) + cy)
+            x_og = int((x - new_cx) * np.cos(angle) - (y - new_cy) * np.sin(angle) + cx)
+            y_og = int((x - new_cx) * np.sin(angle) + (y - new_cy) * np.cos(angle) + cy)
             # Perform bilinear interpolation if the coordinates are within bounds
             if 0 <= x_og < W and 0 <= y_og < H:
                 rotated_img[y, x] = bilinear_interpolate(img, x_og, y_og, C)
