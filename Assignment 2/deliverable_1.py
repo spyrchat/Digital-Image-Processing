@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-from skimage import feature
+from skimage import feature, filters
 import math
 from PIL import Image
 
@@ -83,23 +83,26 @@ def draw_lines_on_image(image, lines, color=(0, 255, 0), thickness=2):
         y1 = int(y0 + 10000 * (a))
         x2 = int(x0 - 10000 * (-b))
         y2 = int(y0 - 10000 * (a))
+
         cv2.line(image, (x1, y1), (x2, y2), color, thickness)
+
 
 if __name__ == "__main__":
     # Load the grayscale image
-    img_path = 'Assignment 2/im5.jpg'
+    img_path = 'Assignment 2/im3.jpg'
     img = Image.open(fp=img_path)
     # img = img.resize((510, 660))
     img_grayscale = img.convert("L")
     img_grayscale = np.array(img_grayscale)
-
-    # Perform Edge Detection using Canny Algorithm
-    img_canny = feature.canny(img_grayscale, sigma=4, low_threshold=10, high_threshold=20)
+    # Perform edge detection using Canny edge detector from skimage
+    blurred_image = filters.gaussian(img_grayscale, sigma=2.5)
+    # Perform Canny Edge Detection
+    img_canny = feature.canny(blurred_image, sigma=2.5, low_threshold=0.02, high_threshold=0.3)
 
     #======== Parameters ==========#
     d_rho = 1
     d_theta = np.pi / 360
-    n = 40
+    n = 50
     max_rho = int(np.hypot(img_grayscale.shape[0], img_grayscale.shape[1]))
     thetas = np.arange(-np.pi / 2, np.pi / 2, d_theta)
     rhos = np.arange(-max_rho, max_rho, d_rho)

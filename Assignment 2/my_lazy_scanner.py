@@ -224,8 +224,11 @@ def extract_quadrilateral_region(image, points):
 #######################################################################################################
 
 if __name__ == "__main__":
-    # Load and preprocess the image
+    
+    ########### Load and preprocess the image ###############
     img_path = 'Assignment 2/im5.jpg'
+    #########################################################
+    
     img = Image.open(fp=img_path)
     # img = img.resize((510, 660))
     # Extract filename and extension for saving cropped images
@@ -237,7 +240,7 @@ if __name__ == "__main__":
     img_grayscale = img.convert("L")
     img_grayscale = np.array(img_grayscale)
     # Perform edge detection using Canny edge detector from skimage
-    img_canny = feature.canny(img_grayscale, sigma=2.5, low_threshold=10, high_threshold=50)  # Adjusted parameters
+    img_canny = feature.canny(img_grayscale, sigma=7, low_threshold=1, high_threshold=20)  # Adjusted parameters
     # Perform Harris corner detection and find corner peaks
     R = my_corner_harris(img_grayscale / 255.0, k=0.05, sigma=3)
     corners = my_corner_peaks(R, rel_threshold=0.005)

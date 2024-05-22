@@ -107,7 +107,7 @@ if __name__ == "__main__":
     # Normalize the image to the range [0, 1]
     image = image / 255.0
 
-    R = my_corner_harris(image, k=0.04, sigma=2.0,method='Fast')
+    R = my_corner_harris(image, k=0.05, sigma=3.0,method='Fast')
     corners = my_corner_peaks(R, rel_threshold=0.0005)
 
     plt.imshow(image, cmap='gray')
