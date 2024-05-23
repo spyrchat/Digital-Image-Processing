@@ -29,26 +29,19 @@ def convert_lines_polar_to_cartesian(lines):
 def find_intersection(line1, line2):
     A1, B1, C1 = line1
     A2, B2, C2 = line2
-    # Coefficient matrix A
     A = np.array([[A1, B1], [A2, B2]])
-    # Constant matrix B
     B = np.array([-C1, -C2])
-    # Check if determinant is zero
     if np.linalg.det(A) == 0:
         return None
     else:
-        # Solve the system of equations
         intersection_point = np.linalg.solve(A, B)
         return intersection_point
 
 def are_perpendicular(theta1, theta2, tol_deg=3):
-    tol_rad = math.radians(tol_deg)  # Convert tolerance from degrees to radians
-    # Normalize the angles to be within the range [0, 2*pi)
+    tol_rad = math.radians(tol_deg)
     theta1 = theta1 % (2 * math.pi)
     theta2 = theta2 % (2 * math.pi)
-    # Compute the absolute difference between the angles
     diff = abs(theta1 - theta2)
-    # Check if the difference is close to pi/2 or 3*pi/2 within the tolerance range
     return (math.isclose(diff, math.pi / 2, abs_tol=tol_rad) or 
             math.isclose(diff, 3 * math.pi / 2, abs_tol=tol_rad) or
             math.isclose(diff, -math.pi / 2, abs_tol=tol_rad) or
@@ -58,24 +51,14 @@ def is_rectangle(points, img_width, img_height, tolerance_factor=1e-2):
     if len(points) != 4:
         return False
 
-    # Calculate the diagonal length of the image
     image_diagonal = np.sqrt(img_width**2 + img_height**2)
-
-    # Calculate tolerance based on the image diagonal
     tolerance = tolerance_factor * image_diagonal
-
-    # Convert points to numpy arrays for vector operations
     points = [np.array(p) for p in points]
-
-    # Calculate the distances between all pairs of points
     dists = []
     for (p1, p2) in combinations(points, 2):
         dists.append((np.linalg.norm(p1 - p2), (p1, p2)))
-
-    # Sort distances for easier comparison
     dists.sort(key=lambda x: x[0])
 
-    # Check pairs of distances
     side1 = dists[0][0]
     side2 = dists[1][0]
     side3 = dists[2][0]
@@ -83,7 +66,6 @@ def is_rectangle(points, img_width, img_height, tolerance_factor=1e-2):
     diag1 = dists[4][0]
     diag2 = dists[5][0]
 
-    # Check if we have two pairs of equal sides and two equal diagonals
     return (abs(side1 - side2) < tolerance and
             abs(side3 - side4) < tolerance and
             abs(diag1 - diag2) < tolerance)
@@ -96,7 +78,6 @@ def order_points(pts):
     rect[2] = pts[np.argmax(s)]
     rect[1] = pts[np.argmin(diff)]
     rect[3] = pts[np.argmax(diff)]
-    
     return rect
 
 def find_rectangles(points, img_width, img_height, tolerance_factor=0.005):
@@ -126,7 +107,6 @@ def rotate_points(points, angle, center, rotation_center):
     translated_points = points - center
     rotated_translated_points = np.dot(translated_points, rotation_matrix.T)
     rotated_points = rotated_translated_points + rotation_center
-    
     return rotated_points
 
 def remove_close_points(points, eps=20, min_samples=1):
@@ -155,7 +135,7 @@ def extract_quadrilateral_region(image, points):
 
 if __name__ == "__main__":
     ########### Load and preprocess the image ###############
-    img_path = 'Assignment 2/im1.jpg'
+    img_path = 'Assignment 2/im4.jpg'
     #########################################################
 
     img = Image.open(fp=img_path)
@@ -163,14 +143,14 @@ if __name__ == "__main__":
     img_high_res = np.array(img_high_res)
 
     # Resize the image for lower resolution processing
-    scale_factor = 0.2
+    scale_factor = 0.1
     img_low_res = cv2.resize(img_high_res, (int(img_high_res.shape[1] * scale_factor), int(img_high_res.shape[0] * scale_factor)))
 
     # Extract filename and extension for saving cropped images
     script_directory = os.path.dirname(os.path.abspath(__file__))
     base_filename = os.path.splitext(os.path.basename(img_path))[0]
     base_extension = os.path.splitext(img_path)[1]
-    # save_directory = "Assignment 2"
+    save_directory = "Assignment 2"
 
     # Perform edge detection using Canny edge detector from skimage
     img_canny = feature.canny(img_low_res, sigma=2.5, low_threshold=10, high_threshold=50)
@@ -179,17 +159,13 @@ if __name__ == "__main__":
     R = my_corner_harris(img_low_res / 255.0, k=0.05, sigma=3)
     corners = my_corner_peaks(R, rel_threshold=0.005)
 
-    # Rescale corners to high resolution
-    rescaled_corners = (corners / scale_factor).astype(int)
-
     # Parameters for Hough Transform
     d_rho = 1
     d_theta = np.pi / 360
-    n = 30
+    n = 25
 
     # Perform Hough Transform
     H, L, res = my_hough_transform(img_canny, d_rho, d_theta, n)
-    # Convert detected lines from polar to Cartesian
     lines = convert_lines_polar_to_cartesian(L)
     intersections = []
     for i in range(len(lines)):
@@ -210,7 +186,7 @@ if __name__ == "__main__":
     normalized_intersections = np.array(normalized_intersections)
 
     filtered_intersections = []
-    distance_threshold = min(H, W) * 0.005
+    distance_threshold = max(H, W) * 0.005
     for intersection in normalized_intersections:
         for corner in corners:
             distance = np.sqrt((intersection[0] - corner[1])**2 + (intersection[1] - corner[0])**2)
@@ -222,15 +198,16 @@ if __name__ == "__main__":
     unique_filtered_intersections = remove_close_points(filtered_intersections, eps=20)
     print("Filtered Intersections (after removal):", unique_filtered_intersections)
 
-    # Rescale the filtered intersections to match the original high-resolution image dimensions
-    rescaled_intersections = (unique_filtered_intersections / scale_factor).astype(int)
-    print("Rescaled Intersections (after removal):", rescaled_intersections)
-
-    img_array = np.array(img)
-    rectangles = find_rectangles(rescaled_intersections, img_high_res.shape[1], img_high_res.shape[0], tolerance_factor=0.006)
+    rectangles = find_rectangles(unique_filtered_intersections, img_low_res.shape[1], img_low_res.shape[0], tolerance_factor=0.006)
     print(f"Number of individual images found: {len(rectangles)}")
 
-    for idx, rect in enumerate(rectangles, start=1):
+    # Rescale rectangles to the high-resolution image dimensions
+    rescaled_rectangles = []
+    for rect in rectangles:
+        rescaled_rect = (np.array(rect) / scale_factor).astype(int)
+        rescaled_rectangles.append(rescaled_rect)
+
+    for idx, rect in enumerate(rescaled_rectangles, start=1):
         img_grayscale = np.array(img)
         sorted_points = order_points(rect)
         angle = calculate_angle(sorted_points)

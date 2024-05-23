@@ -90,7 +90,7 @@ if __name__ == "__main__":
     height_high, width_high = img_high_res.shape
 
     # Resize the image for lower resolution processing
-    scale_factor = 0.2  # Scale factor for lower resolution
+    scale_factor = 0.1  # Scale factor for lower resolution
     img_low_res = cv2.resize(img_high_res, (int(width_high * scale_factor), int(height_high * scale_factor)))
     height_low, width_low = img_low_res.shape
 
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     # Parameters for Hough Transform
     d_rho = 1
     d_theta = np.pi / 360
-    n = 30
+    n = 25
     max_rho = int(np.hypot(height_low, width_low))
     thetas = np.arange(-np.pi / 2, np.pi / 2, d_theta)
     rhos = np.arange(-max_rho, max_rho, d_rho)
