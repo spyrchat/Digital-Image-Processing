@@ -41,11 +41,11 @@ def bilinear_interpolate(img, x, y, C):
 
     return interpolated_value
 
-def my_img_rotation(img, angle):
+def my_img_rotation(img, angle_rad):
     H, W = img.shape[:2]
     C = 1 if img.ndim == 2 else img.shape[2]
     # Calculate the dimensions of the new rotated image
-    new_W, new_H = calculate_new_dimensions(W, H, angle)
+    new_W, new_H = calculate_new_dimensions(W, H, angle_rad)
     rotated_img = np.zeros((new_H, new_W), dtype=img.dtype) if C == 1 else np.zeros((new_H, new_W, C), dtype=img.dtype)
     
     cx, cy = W // 2, H // 2
