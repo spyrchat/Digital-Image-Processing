@@ -16,6 +16,7 @@ def calculate_new_dimensions(width, height, angle):
 def bilinear_interpolate(img, x, y, C):
     H = img.shape[0]
     W = img.shape[1]
+
     if C > 1:
         temp = np.zeros(3)
     else:
@@ -39,35 +40,27 @@ def bilinear_interpolate(img, x, y, C):
     interpolated_value = temp // count
 
     return interpolated_value
-#### The Angle should Be Given In RADIANS #####
+
 def my_img_rotation(img, angle):
     H, W = img.shape[:2]
     C = 1 if img.ndim == 2 else img.shape[2]
+    # Calculate the dimensions of the new rotated image
     new_W, new_H = calculate_new_dimensions(W, H, angle)
     rotated_img = np.zeros((new_H, new_W), dtype=img.dtype) if C == 1 else np.zeros((new_H, new_W, C), dtype=img.dtype)
     
     cx, cy = W // 2, H // 2
     new_cx, new_cy = new_W // 2, new_H // 2
-
-    # Create meshgrid for coordinates
-    x, y = np.meshgrid(np.arange(new_W), np.arange(new_H))
-
-    # Flatten the arrays for vectorized operations
-    x_flat = x.flatten()
-    y_flat = y.flatten()
-
-    # Apply counterclockwise rotation
-    x_og = ((x_flat - new_cx) * np.cos(angle) - (y_flat - new_cy) * np.sin(angle) + cx).astype(int)
-    y_og = ((x_flat - new_cx) * np.sin(angle) + (y_flat - new_cy) * np.cos(angle) + cy).astype(int)
-
-    # Check for valid coordinates
-    valid_coords = (0 <= x_og) & (x_og < W) & (0 <= y_og) & (y_og < H)
-
-    # Perform bilinear interpolation for valid coordinates
-    if C == 1:
-        rotated_img[y_flat[valid_coords], x_flat[valid_coords]] = img[y_og[valid_coords], x_og[valid_coords]]
-    else:
-        rotated_img[y_flat[valid_coords], x_flat[valid_coords], :] = img[y_og[valid_coords], x_og[valid_coords], :]
+    
+    angle_rad = np.deg2rad(angle)
+    # The algorithm applies the inverse rotation to each pixel in the new image
+    # to find its corresponding position in the original image.
+    for y in range(new_H):
+        for x in range(new_W):
+            x_og = int((x - new_cx) * np.cos(angle_rad) - (y - new_cy) * np.sin(angle_rad) + cx)
+            y_og = int((x - new_cx) * np.sin(angle_rad) + (y - new_cy) * np.cos(angle_rad) + cy)
+            # Perform bilinear interpolation if the coordinates are within bounds
+            if 0 <= x_og < W and 0 <= y_og < H:
+                rotated_img[y, x] = bilinear_interpolate(img, x_og, y_og, C)
 
     return rotated_img
 
