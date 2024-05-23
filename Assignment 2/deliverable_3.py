@@ -51,7 +51,6 @@ def my_img_rotation(img, angle):
     cx, cy = W // 2, H // 2
     new_cx, new_cy = new_W // 2, new_H // 2
     
-    angle_rad = np.deg2rad(angle)
     # The algorithm applies the inverse rotation to each pixel in the new image
     # to find its corresponding position in the original image.
     for y in range(new_H):
@@ -67,7 +66,7 @@ def my_img_rotation(img, angle):
 def main(image_path, angle):
     # Load the image
     img = Image.open(image_path)
-    # img = img.resize((510, 660)) 
+    img = img.resize((510, 660)) 
     #img = img.convert("L") # The algorithm works for both RGB and Grayscale Images
     img_array = np.array(img)
     
