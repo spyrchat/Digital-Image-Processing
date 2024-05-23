@@ -1,20 +1,18 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-from skimage import feature, filters
+from skimage import feature
 import math
 from PIL import Image
 
-## Hough Transform is implemented both as the slides of the lesson indicate and with the use of numpy operations ##
-## so it can run in a reasonable ammount of time given the complexity of the algorithm on high resolution images ##
-
 def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: int, method='Fast'):
     # Image dimensions
-    height,width = np.shape(img_binary)
-    #Rho max is the Hypotenuse of the triangle that is formed with H and W as vertical lines
+    height, width = np.shape(img_binary)
+    # Rho max is the hypotenuse of the triangle that is formed with height and width as vertical lines
     max_rho = int(np.hypot(height, width))
     thetas = np.arange(-np.pi / 2, np.pi / 2, d_theta)  # Range of theta values
     rhos = np.arange(-max_rho, max_rho, d_rho)  # Range of rho values
+    
     if method == 'Fast':
         H = np.zeros((len(rhos), len(thetas)), dtype=int)
         # Get the indices of the binary image where the pixel value is 1
@@ -33,7 +31,7 @@ def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: in
             np.add.at(H[:, i], rho_indices[:, i], 1)
         # Find the n highest peaks in the accumulator array
         flat_indices = np.argpartition(H.ravel(), -n)[-n:]
-        peak_indices = np.column_stack(np.unravel_index(flat_indices, H.shape)) 
+        peak_indices = np.column_stack(np.unravel_index(flat_indices, H.shape))
         # Extract the rho and theta values for the strongest lines
         rho_theta_pairs = [(rhos[rho_idx], thetas[theta_idx]) for rho_idx, theta_idx in peak_indices]
         # Create the output parameter list for the strongest lines
@@ -43,19 +41,17 @@ def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: in
         res = img_pixels - np.sum(H)
         return H, L, res
     
-    if method == 'ByTheBook' :
-        #H has the role of the accumulator array
+    if method == 'ByTheBook':
         H = np.zeros((len(rhos), len(thetas)), dtype=int)
-        #H is populated in a way that every single cell has accumulated the "votes" of pixel in the image where the line (rho, theta) passes
+        # Accumulate votes in H
         for x in range(width):
-                for y in range(height):
-                    if img_binary[y, x] == 1:
-                        for j in range(len(thetas)-1):
-                            theta = (thetas[j] + thetas[j+1]) /2
-                            rho = x * math.cos(theta) + y * math.sin(theta)
-                            rho_idx = int((rho+max_rho) / d_rho)
-                            H[rho_idx, j] += 1
-        
+            for y in range(height):
+                if img_binary[y, x] == 1:
+                    for j in range(len(thetas) - 1):
+                        theta = (thetas[j] + thetas[j + 1]) / 2
+                        rho = x * math.cos(theta) + y * math.sin(theta)
+                        rho_idx = int((rho + max_rho) / d_rho)
+                        H[rho_idx, j] += 1
 
         # Find the n highest peaks in the accumulator array
         flat_indices = np.argpartition(H.ravel(), -n)[-n:]
@@ -70,14 +66,14 @@ def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: in
         res = np.sum(img_binary) - np.sum(H)
         
         return H, L, res
-    
-def draw_lines_on_image(image, lines, color=(0, 255, 0), thickness=2):
-   # Iterate though each element in L to find the line equations that are represented in each cell of L
+
+def draw_lines_on_image(image, lines, scale_x=1, scale_y=1, color=(0, 255, 0), thickness=2):
+    # Iterate through each element in L to find the line equations that are represented in each cell of L
     for rho, theta in lines:
         a = np.cos(theta)
         b = np.sin(theta)
-        x0 = a * rho
-        y0 = b * rho
+        x0 = a * rho * scale_x
+        y0 = b * rho * scale_y
         # Extend the line by 1000 pixels in both directions to ensure it covers the entire image
         x1 = int(x0 + 10000 * (-b))
         y1 = int(y0 + 10000 * (a))
@@ -86,27 +82,28 @@ def draw_lines_on_image(image, lines, color=(0, 255, 0), thickness=2):
 
         cv2.line(image, (x1, y1), (x2, y2), color, thickness)
 
-
 if __name__ == "__main__":
-    # Load the grayscale image
-    img_path = 'Assignment 2/im3.jpg'
+    # Load the high-resolution grayscale image
+    img_path = 'Assignment 2/im5.jpg'
     img = Image.open(fp=img_path)
-    # img = img.resize((510, 660))
-    img_grayscale = img.convert("L")
-    img_grayscale = np.array(img_grayscale)
-    # Perform edge detection using Canny edge detector from skimage
-    blurred_image = filters.gaussian(img_grayscale, sigma=2.5)
-    # Perform Canny Edge Detection
-    img_canny = feature.canny(blurred_image, sigma=2.5, low_threshold=0.02, high_threshold=0.3)
+    img_high_res = np.array(img.convert("L"))
+    height_high, width_high = img_high_res.shape
 
-    #======== Parameters ==========#
+    # Resize the image for lower resolution processing
+    scale_factor = 0.2  # Scale factor for lower resolution
+    img_low_res = cv2.resize(img_high_res, (int(width_high * scale_factor), int(height_high * scale_factor)))
+    height_low, width_low = img_low_res.shape
+
+    # Perform edge detection using Canny edge detector
+    img_canny = feature.canny(img_low_res, sigma=2.5, low_threshold=10, high_threshold=50)
+
+    # Parameters for Hough Transform
     d_rho = 1
     d_theta = np.pi / 360
-    n = 50
-    max_rho = int(np.hypot(img_grayscale.shape[0], img_grayscale.shape[1]))
+    n = 30
+    max_rho = int(np.hypot(height_low, width_low))
     thetas = np.arange(-np.pi / 2, np.pi / 2, d_theta)
     rhos = np.arange(-max_rho, max_rho, d_rho)
-    #==============================#
 
     # Perform Hough Transform
     H, L, res = my_hough_transform(img_canny, d_rho, d_theta, n)
@@ -119,23 +116,23 @@ if __name__ == "__main__":
     plt.xlabel('Theta (degrees)')
     plt.ylabel('Rho (pixels)')
     plt.show()
-    
-    # Display the original image with edge points highlighted
+
+    # Display the low-resolution image with edge points highlighted
     y_idxs, x_idxs = np.nonzero(img_canny)
     plt.figure(figsize=(10, 10))
-    plt.imshow(cv2.cvtColor(img_grayscale, cv2.COLOR_GRAY2RGB))
+    plt.imshow(cv2.cvtColor(img_low_res, cv2.COLOR_GRAY2RGB))
     plt.scatter(x_idxs, y_idxs, color='red', s=1)  # Highlight edge points
-    plt.title('Original Image with Edge Points')
+    plt.title('Low-resolution Image with Edge Points')
     plt.show()
 
-    # Draw the detected lines on the original image
-    img_with_lines = cv2.cvtColor(img_grayscale, cv2.COLOR_GRAY2BGR)
-    draw_lines_on_image(img_with_lines, L)
+    # Draw the detected lines on the high-resolution image
+    img_with_lines = cv2.cvtColor(img_high_res, cv2.COLOR_GRAY2BGR)
+    draw_lines_on_image(img_with_lines, L, scale_x=1/scale_factor, scale_y=1/scale_factor)
 
-    # Display the original image with detected lines
+    # Display the high-resolution image with detected lines
     plt.figure(figsize=(10, 10))
     plt.imshow(cv2.cvtColor(img_with_lines, cv2.COLOR_BGR2RGB))
-    plt.title('Detected Lines on Original Image')
+    plt.title('Detected Lines on High-resolution Image')
     plt.show()
 
     print(f"Number of points not part of the {n} strongest lines: {res}")
