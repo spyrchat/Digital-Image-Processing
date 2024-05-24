@@ -30,7 +30,7 @@ def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: in
         for i in range(len(theta_midpoints)):
             np.add.at(H[:, i], rho_indices[:, i], 1)
         # Find the n highest peaks in the accumulator array
-        flat_indices = np.argpartition(H.ravel(), -n)[-n:]
+        flat_indices = np.argpartition(H.ravel(), -2)[-n:]
         peak_indices = np.column_stack(np.unravel_index(flat_indices, H.shape))
         # Extract the rho and theta values for the strongest lines
         rho_theta_pairs = [(rhos[rho_idx], thetas[theta_idx]) for rho_idx, theta_idx in peak_indices]
@@ -54,7 +54,7 @@ def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: in
                         H[rho_idx, j] += 1
 
         # Find the n highest peaks in the accumulator array
-        flat_indices = np.argpartition(H.ravel(), -n)[-n:]
+        flat_indices = np.argpartition(H.ravel(), -2)[-n:]
         peak_indices = np.column_stack(np.unravel_index(flat_indices, H.shape))
         
         # Extract the rho and theta values for the strongest lines
@@ -84,7 +84,7 @@ def draw_lines_on_image(image, lines, scale_x=1, scale_y=1, color=(0, 255, 0), t
 
 if __name__ == "__main__":
     # Load the high-resolution grayscale image
-    img_path = 'Assignment 2/im5.jpg'
+    img_path = 'Assignment 2/im.jpg'
     img = Image.open(fp=img_path)
     img_high_res = np.array(img.convert("L"))
     height_high, width_high = img_high_res.shape
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     height_low, width_low = img_low_res.shape
 
     # Perform edge detection using Canny edge detector
-    img_canny = feature.canny(img_low_res, sigma=2.5, low_threshold=10, high_threshold=50)
+    img_canny = feature.canny(img_low_res, sigma=4, low_threshold=10, high_threshold=50)
 
     # Parameters for Hough Transform
     d_rho = 1

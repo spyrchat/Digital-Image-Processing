@@ -192,10 +192,7 @@ def rotate_points(points, angle, center, rotation_center):
     angle_rad = np.radians(angle)
     cos_theta = np.cos(angle_rad)
     sin_theta = np.sin(angle_rad)
-    rotation_matrix = np.array([
-        [cos_theta, -sin_theta],
-        [sin_theta, cos_theta]
-    ])
+    rotation_matrix = np.array([[cos_theta, -sin_theta],[sin_theta, cos_theta]])
     translated_points = points - center
     rotated_translated_points = np.dot(translated_points, rotation_matrix.T)
     rotated_points = rotated_translated_points + rotation_center
@@ -248,7 +245,7 @@ def extract_rectangular_region(image, points):
 
 if __name__ == "__main__":
     ########### Load and preprocess the image ###############
-    img_path = 'Assignment 2/im5.jpg'
+    img_path = 'Assignment 2/im4.jpg'
     #########################################################
 
     img = Image.open(fp=img_path)
@@ -262,14 +259,13 @@ if __name__ == "__main__":
     # Extract filename and extension for saving cropped images
     script_directory = os.path.dirname(os.path.abspath(__file__))
     base_filename = os.path.splitext(os.path.basename(img_path))[0]
-    base_extension = os.path.splitext(img_path)[1]
-    save_directory = "Assignment 2"
+    base_extension = os.path.splitext(img_path)[1] 
 
     # Perform edge detection using Canny edge detector from skimage
     img_canny = feature.canny(img_low_res, sigma=2.5, low_threshold=10, high_threshold=50)
 
     # Perform Harris corner detection and find corner peaks
-    R = my_corner_harris(img_low_res / 255.0, k=0.05, sigma=3)
+    R = my_corner_harris(img_low_res / 255.0, sigma=3, k=0.05)
     corners = my_corner_peaks(R, rel_threshold=0.005)
 
     # Parameters for Hough Transform
@@ -298,6 +294,7 @@ if __name__ == "__main__":
         normalized_intersections.append((x_norm, y_norm))
     normalized_intersections = np.array(normalized_intersections)
 
+# find the intersections that are close (within distance_tolorance) to the corners that were found from Harris Algorithm
     filtered_intersections = []
     distance_threshold = max(H, W) * 0.005
     for intersection in normalized_intersections:
@@ -309,8 +306,7 @@ if __name__ == "__main__":
     filtered_intersections = np.array(filtered_intersections).astype(int)
     filtered_intersections = filtered_intersections[np.lexsort((filtered_intersections[:, 1], filtered_intersections[:, 0]))]
     unique_filtered_intersections = remove_close_points(filtered_intersections, eps=20)
-    print("Filtered Intersections (after removal):", unique_filtered_intersections)
-
+#Find the Rectangles
     rectangles = find_rectangles(unique_filtered_intersections, img_low_res.shape[1], img_low_res.shape[0], tolerance_factor=0.006)
     print(f"Number of individual images found: {len(rectangles)}")
 

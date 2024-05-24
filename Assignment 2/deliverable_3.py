@@ -66,7 +66,6 @@ def my_img_rotation(img, angle_rad):
 def main(image_path, angle):
     # Load the image
     img = Image.open(image_path)
-    img = img.resize((510, 660)) 
     #img = img.convert("L") # The algorithm works for both RGB and Grayscale Images
     img_array = np.array(img)
     
