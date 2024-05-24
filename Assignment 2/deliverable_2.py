@@ -105,7 +105,7 @@ if __name__ == "__main__":
     img_high_res = np.array(img_high_res)
 
     # Resize the image for lower resolution processing
-    scale_factor = 0.2  # Scale factor for lower resolution
+    scale_factor = 0.1  # Scale factor for lower resolution
     img_low_res = cv2.resize(img_high_res, (int(img_high_res.shape[1] * scale_factor), int(img_high_res.shape[0] * scale_factor)))
 
     # Normalize the low resolution image to the range [0, 1]

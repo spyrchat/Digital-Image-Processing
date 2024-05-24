@@ -102,7 +102,7 @@ def draw_lines_on_image(image, lines, scale_x=1, scale_y=1, color=(0, 255, 0), t
         cv2.line(image, (x1, y1), (x2, y2), color, thickness)
 
 if __name__ == "__main__":
-    img_path = 'Assignment 2/im5.jpg'
+    img_path = 'Assignment 2/im2.jpg'
     img = Image.open(fp=img_path)
     img_high_res_rgb = np.array(img)
     img_high_res = img.convert("L")
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     # Parameters for Hough Transform
     d_rho = 1
     d_theta = np.pi / 360
-    n = 30
+    n = 40
     max_rho = int(np.hypot(height_low, width_low))
     thetas = np.arange(-np.pi / 2, np.pi / 2, d_theta)
     rhos = np.arange(-max_rho, max_rho, d_rho)

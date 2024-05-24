@@ -182,7 +182,7 @@ def rotate_points(points, angle, center, rotation_center):
 
     Parameters:
     points (array): Array of points (x, y) to rotate.
-    angle (float): The rotation angle in degrees.
+    angle (float): The rotation angle in degrees!!!
     center (tuple): The center of the original image (x, y).
     rotation_center (tuple): The center of the rotated image (x, y).
 
@@ -200,7 +200,7 @@ def rotate_points(points, angle, center, rotation_center):
 
 def remove_close_points(points, eps=20, min_samples=1):
     """
-    Remove points that are too close to each other using DBSCAN clustering.
+    Remove points that are too close to each other using DBSCAN.
 
     Parameters:
     points (np.ndarray): Array of points to filter.
@@ -245,7 +245,7 @@ def extract_rectangular_region(image, points):
 
 if __name__ == "__main__":
     ########### Load and preprocess the image ###############
-    img_path = 'Assignment 2/im1.jpg'
+    img_path = 'Assignment 2/im5.jpg'
     #########################################################
 
     img = Image.open(fp=img_path)
@@ -271,7 +271,7 @@ if __name__ == "__main__":
     # Parameters for Hough Transform
     d_rho = 1
     d_theta = np.pi / 360
-    n = 30
+    n = 40
 
     # Perform Hough Transform
     H, L, res = my_hough_transform(img_canny, d_rho, d_theta, n)
@@ -306,7 +306,8 @@ if __name__ == "__main__":
     filtered_intersections = np.array(filtered_intersections).astype(int)
     filtered_intersections = filtered_intersections[np.lexsort((filtered_intersections[:, 1], filtered_intersections[:, 0]))]
     unique_filtered_intersections = remove_close_points(filtered_intersections, eps=20)
-#Find the Rectangles
+    
+    #Find the Rectangles
     rectangles = find_rectangles(unique_filtered_intersections, img_low_res.shape[1], img_low_res.shape[0], tolerance_factor=0.006)
     print(f"Number of individual images found: {len(rectangles)}")
 
