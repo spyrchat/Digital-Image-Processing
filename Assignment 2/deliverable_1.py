@@ -102,7 +102,7 @@ def draw_lines_on_image(image, lines, scale_x=1, scale_y=1, color=(0, 255, 0), t
         cv2.line(image, (x1, y1), (x2, y2), color, thickness)
 
 if __name__ == "__main__":
-    img_path = 'Assignment 2/im2.jpg'
+    img_path = 'Assignment 2/im5.jpg'
     img = Image.open(fp=img_path)
     img_high_res_rgb = np.array(img)
     img_high_res = img.convert("L")
@@ -110,18 +110,18 @@ if __name__ == "__main__":
     height_high, width_high = img_high_res.shape
     
     # Resize the image for lower resolution processing
-    scale_factor = 0.2  # Scale factor for lower resolution
+    scale_factor = 0.1  # Scale factor for lower resolution
     img_low_res = cv2.resize(img_high_res, (int(width_high * scale_factor), int(height_high * scale_factor)))
     img_low_res_rgb = cv2.resize(img_high_res_rgb, (int(width_high * scale_factor), int(height_high * scale_factor)))
     height_low, width_low = img_low_res.shape
 
     # Perform edge detection using Canny edge detector
-    img_canny = feature.canny(img_low_res, sigma=4, low_threshold=10, high_threshold=50)
+    img_canny = feature.canny(img_low_res, sigma=4, low_threshold=2, high_threshold=10)
 
     # Parameters for Hough Transform
     d_rho = 1
     d_theta = np.pi / 360
-    n = 25
+    n = 30
     max_rho = int(np.hypot(height_low, width_low))
     thetas = np.arange(-np.pi / 2, np.pi / 2, d_theta)
     rhos = np.arange(-max_rho, max_rho, d_rho)
