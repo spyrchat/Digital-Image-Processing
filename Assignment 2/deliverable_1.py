@@ -30,15 +30,26 @@ def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: in
         for i in range(len(theta_midpoints)):
             np.add.at(H[:, i], rho_indices[:, i], 1)
         # Find the n highest peaks in the accumulator array
-        flat_indices = np.argpartition(H.ravel(), -2)[-n:]
-        peak_indices = np.column_stack(np.unravel_index(flat_indices, H.shape))
-        # Extract the rho and theta values for the strongest lines
-        rho_theta_pairs = [(rhos[rho_idx], thetas[theta_idx]) for rho_idx, theta_idx in peak_indices]
-        # Create the output parameter list for the strongest lines
-        L = np.array(rho_theta_pairs)
+        indices = np.argpartition(H.flatten(), -2)[-n:]
+        L_rhos_idxes, L_theta_idxes = np.unravel_index(indices, H.shape)
+        L = np.vstack((rhos[L_rhos_idxes], thetas[L_theta_idxes])).T
         img_pixels = height * width
         # Count the number of points not part of the n strongest lines
         res = img_pixels - np.sum(H)
+
+        # Compute res
+        # Iterate over each pixel in the image to find how many pixels are in the lines of L
+        num_of_pixels_in_lines = 0
+        for y in range(height):
+            for x in range(width):
+                # Check if the pixel (i, j) is in any of the lines
+                for rho, theta in L:
+                    # Small tolerance if the pixel is in line
+                    if abs(rho - (y * np.cos(theta) + y * np.sin(theta))) < 1:  
+                        num_of_pixels_in_lines += 1
+                        break
+
+        res = height * width - num_of_pixels_in_lines
         return H, L, res
     
     if method == 'ByTheBook':
@@ -62,9 +73,17 @@ def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: in
         # Create the output parameter list for the strongest lines
         L = np.array(rho_theta_pairs)
         
-        # Count the number of points not part of the n strongest lines
-        res = np.sum(img_binary) - np.sum(H)
-        
+        num_of_pixels_in_lines = 0
+        for y in range(height):
+            for x in range(width):
+                # Check if the pixel (i, j) is in any of the lines
+                for rho, theta in L:
+                    # Small tolerance if the pixel is in line
+                    if abs(rho - (y * np.cos(theta) + y * np.sin(theta))) < 1:  
+                        num_of_pixels_in_lines += 1
+                        break
+
+        res = height * width - num_of_pixels_in_lines
         return H, L, res
 
 def draw_lines_on_image(image, lines, scale_x=1, scale_y=1, color=(0, 255, 0), thickness=2):
@@ -83,12 +102,12 @@ def draw_lines_on_image(image, lines, scale_x=1, scale_y=1, color=(0, 255, 0), t
         cv2.line(image, (x1, y1), (x2, y2), color, thickness)
 
 if __name__ == "__main__":
-    # Load the high-resolution grayscale image
-    img_path = 'Assignment 2/im.jpg'
+    img_path = 'Assignment 2/im2.jpg'
     img = Image.open(fp=img_path)
-    img_high_res = np.array(img.convert("L"))
+    img_high_res = img.convert("L")
+    img_high_res = np.array(img_high_res)
     height_high, width_high = img_high_res.shape
-
+    
     # Resize the image for lower resolution processing
     scale_factor = 0.1  # Scale factor for lower resolution
     img_low_res = cv2.resize(img_high_res, (int(width_high * scale_factor), int(height_high * scale_factor)))

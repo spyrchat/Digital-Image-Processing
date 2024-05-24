@@ -245,7 +245,7 @@ def extract_rectangular_region(image, points):
 
 if __name__ == "__main__":
     ########### Load and preprocess the image ###############
-    img_path = 'Assignment 2/im4.jpg'
+    img_path = 'Assignment 2/im5.jpg'
     #########################################################
 
     img = Image.open(fp=img_path)
