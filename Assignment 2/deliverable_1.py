@@ -104,13 +104,15 @@ def draw_lines_on_image(image, lines, scale_x=1, scale_y=1, color=(0, 255, 0), t
 if __name__ == "__main__":
     img_path = 'Assignment 2/im2.jpg'
     img = Image.open(fp=img_path)
+    img_high_res_rgb = np.array(img)
     img_high_res = img.convert("L")
     img_high_res = np.array(img_high_res)
     height_high, width_high = img_high_res.shape
     
     # Resize the image for lower resolution processing
-    scale_factor = 0.1  # Scale factor for lower resolution
+    scale_factor = 0.2  # Scale factor for lower resolution
     img_low_res = cv2.resize(img_high_res, (int(width_high * scale_factor), int(height_high * scale_factor)))
+    img_low_res_rgb = cv2.resize(img_high_res_rgb, (int(width_high * scale_factor), int(height_high * scale_factor)))
     height_low, width_low = img_low_res.shape
 
     # Perform edge detection using Canny edge detector
@@ -136,21 +138,21 @@ if __name__ == "__main__":
     plt.ylabel('Rho (pixels)')
     plt.show()
 
-    # Display the low-resolution image with edge points highlighted
+    # Display the low-resolution RGB image with edge points highlighted
     y_idxs, x_idxs = np.nonzero(img_canny)
     plt.figure(figsize=(10, 10))
-    plt.imshow(cv2.cvtColor(img_low_res, cv2.COLOR_GRAY2RGB))
+    plt.imshow(img_low_res_rgb)
     plt.scatter(x_idxs, y_idxs, color='red', s=1)  # Highlight edge points
     plt.title('Low-resolution Image with Edge Points')
     plt.show()
 
-    # Draw the detected lines on the high-resolution image
-    img_with_lines = cv2.cvtColor(img_high_res, cv2.COLOR_GRAY2BGR)
+    # Draw the detected lines on the high-resolution RGB image
+    img_with_lines = img_high_res_rgb.copy()
     draw_lines_on_image(img_with_lines, L, scale_x=1/scale_factor, scale_y=1/scale_factor)
 
-    # Display the high-resolution image with detected lines
+    # Display the high-resolution RGB image with detected lines
     plt.figure(figsize=(10, 10))
-    plt.imshow(cv2.cvtColor(img_with_lines, cv2.COLOR_BGR2RGB))
+    plt.imshow(img_with_lines)
     plt.title('Detected Lines on High-resolution Image')
     plt.show()
 
