@@ -6,7 +6,7 @@ import cv2
 
 
 #The function my_corner_harris can get Ridiculously SLOW! especially for larger images, so I have implemented the algorithm the way the excircise commanded 
-#And I also implemented a method that is the default and it is named 'Fast' that aookies a Gaussian filter directly to the Gradient Product Images Ixx Ixy and Iyy
+#And I also implemented a method that is the default and it is named 'Fast' that uses a Gaussian filter directly to the Gradient Product Images Ixx Ixy and Iyy
 #Essentially it performs the same Weighted summation over a neighborhood BUT it runs orders of Magnitude Faster. I left the other method that can be tried if you pass 
 #######'ByTheBook'##### as an argument in my_corner_harris.
 import numpy as np
@@ -25,7 +25,7 @@ def my_corner_harris(img, k=0.04, sigma=1.0, method='Fast'):
         I22 = I2**2
         
         # Apply Gaussian filter to the squared gradients
-        S11 = gaussian_filter(I11, sigma=sigma)
+        S11 = gaussian_filter(I11, sigma=sigma) #The default value for the Gaussian Window is 4σ
         S12 = gaussian_filter(I12, sigma=sigma)
         S22 = gaussian_filter(I22, sigma=sigma)
         
@@ -98,7 +98,7 @@ def my_corner_peaks(harris_response, rel_threshold=0.1):
 
 # Example usage
 if __name__ == "__main__":
-    img_path = 'Assignment 2/im2.jpg'
+    img_path = 'Assignment 2/im1.jpg'
     img = Image.open(fp=img_path)
     img_high_res_rgb = np.array(img)
     img_high_res = img.convert("L")

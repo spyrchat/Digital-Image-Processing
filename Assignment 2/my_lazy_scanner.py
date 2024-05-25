@@ -85,7 +85,7 @@ def are_perpendicular(theta1, theta2, tol_deg=3):
             math.isclose(diff, -math.pi / 2, abs_tol=tol_rad) or
             math.isclose(diff, -3 * math.pi / 2, abs_tol=tol_rad))
 
-def is_rectangle(points, img_width, img_height, tolerance_factor=1e-2):
+def is_rectangle(points, img_width, img_height, tolerance=1e-2):
     """
     Check if four points form a rectangle within a given tolerance.
 
@@ -101,8 +101,7 @@ def is_rectangle(points, img_width, img_height, tolerance_factor=1e-2):
     if len(points) != 4:
         return False
 
-    image_diagonal = np.sqrt(img_width**2 + img_height**2)
-    tolerance = tolerance_factor * image_diagonal
+    # image_diagonal = np.sqrt(img_width**2 + img_height**2)
     points = [np.array(p) for p in points]
     dists = []
     for (p1, p2) in combinations(points, 2):
@@ -139,7 +138,7 @@ def order_points(pts):
     rect[3] = pts[np.argmax(diff)]
     return rect
 
-def find_rectangles(points, img_width, img_height, tolerance_factor=0.005):
+def find_rectangles(points, img_width, img_height, tolerance=5):
     """
     Find rectangles among a set of points.
 
@@ -154,7 +153,7 @@ def find_rectangles(points, img_width, img_height, tolerance_factor=0.005):
     """
     rectangles = []
     for combination in combinations(points, 4):
-        if is_rectangle(combination, img_width=img_width, img_height=img_height, tolerance_factor=tolerance_factor):
+        if is_rectangle(combination, img_width=img_width, img_height=img_height, tolerance=tolerance):
             rectangles.append(combination)
     return np.array(rectangles)
 
@@ -245,7 +244,7 @@ def extract_rectangular_region(image, points):
 
 if __name__ == "__main__":
     ########### Load and preprocess the image ###############
-    img_path = 'Assignment 2/im5.jpg'
+    img_path = 'Assignment 2/im1.jpg'
     #########################################################
 
     img = Image.open(fp=img_path)
@@ -265,7 +264,7 @@ if __name__ == "__main__":
     img_canny = feature.canny(img_low_res, sigma=4, low_threshold=2, high_threshold=10)
 
     # Perform Harris corner detection and find corner peaks
-    R = my_corner_harris(img_low_res / 255.0, sigma=3, k=0.05)
+    R = my_corner_harris(img_low_res / 255.0, k=0.05, sigma=2)
     corners = my_corner_peaks(R, rel_threshold=0.005)
 
     # Parameters for Hough Transform
@@ -284,7 +283,7 @@ if __name__ == "__main__":
                 if temp is not None:
                     temp = np.floor(temp).astype(int)
                     intersections.append(temp)
-
+    # This step is to make sure that the x,y coordinates lie within the image dimensions of the low_res image
     H, W = img_low_res.shape
     normalized_intersections = []
     for point in intersections:
@@ -296,7 +295,7 @@ if __name__ == "__main__":
 
 # find the intersections that are close (within distance_tolorance) to the corners that were found from Harris Algorithm
     filtered_intersections = []
-    distance_threshold = max(H, W) * 0.005
+    distance_threshold = min(H, W) * 0.005
     for intersection in normalized_intersections:
         for corner in corners:
             distance = np.sqrt((intersection[0] - corner[1])**2 + (intersection[1] - corner[0])**2)
@@ -308,7 +307,7 @@ if __name__ == "__main__":
     unique_filtered_intersections = remove_close_points(filtered_intersections, eps=20)
     
     #Find the Rectangles
-    rectangles = find_rectangles(unique_filtered_intersections, img_low_res.shape[1], img_low_res.shape[0], tolerance_factor=0.006)
+    rectangles = find_rectangles(unique_filtered_intersections, img_low_res.shape[1], img_low_res.shape[0], tolerance=3.5)
     print(f"Number of individual images found: {len(rectangles)}")
 
     # Rescale rectangles to the high-resolution image dimensions

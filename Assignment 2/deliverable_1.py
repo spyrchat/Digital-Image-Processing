@@ -42,7 +42,7 @@ def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: in
         num_of_pixels_in_lines = 0
         for y in range(height):
             for x in range(width):
-                # Check if the pixel (i, j) is in any of the lines
+                # Check if the pixel (y, x) is in any of the lines
                 for rho, theta in L:
                     # Small tolerance if the pixel is in line
                     if abs(rho - (y * np.cos(theta) + y * np.sin(theta))) < 1:  
@@ -76,7 +76,7 @@ def my_hough_transform(img_binary: np.ndarray, d_rho: int, d_theta: float, n: in
         num_of_pixels_in_lines = 0
         for y in range(height):
             for x in range(width):
-                # Check if the pixel (i, j) is in any of the lines
+                # Check if the pixel (y, x) is in any of the lines
                 for rho, theta in L:
                     # Small tolerance if the pixel is in line
                     if abs(rho - (y * np.cos(theta) + y * np.sin(theta))) < 1:  
@@ -102,7 +102,7 @@ def draw_lines_on_image(image, lines, scale_x=1, scale_y=1, color=(0, 255, 0), t
         cv2.line(image, (x1, y1), (x2, y2), color, thickness)
 
 if __name__ == "__main__":
-    img_path = 'Assignment 2/im2.jpg'
+    img_path = 'Assignment 2/im4.jpg'
     img = Image.open(fp=img_path)
     img_high_res_rgb = np.array(img)
     img_high_res = img.convert("L")
