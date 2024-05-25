@@ -244,7 +244,7 @@ def extract_rectangular_region(image, points):
 
 if __name__ == "__main__":
     ########### Load and preprocess the image ###############
-    img_path = 'Assignment 2/im3.jpg'
+    img_path = 'Assignment 2/im2.jpg'
     #########################################################
 
     img = Image.open(fp=img_path)
@@ -270,7 +270,7 @@ if __name__ == "__main__":
     # Parameters for Hough Transform
     d_rho = 1
     d_theta = np.pi / 360
-    n = 35
+    n = 36
 
     # Perform Hough Transform
     H, L, res = my_hough_transform(img_canny, d_rho, d_theta, n)
