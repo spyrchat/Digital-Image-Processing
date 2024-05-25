@@ -244,7 +244,7 @@ def extract_rectangular_region(image, points):
 
 if __name__ == "__main__":
     ########### Load and preprocess the image ###############
-    img_path = 'Assignment 2/im1.jpg'
+    img_path = 'Assignment 2/im3.jpg'
     #########################################################
 
     img = Image.open(fp=img_path)
@@ -264,13 +264,13 @@ if __name__ == "__main__":
     img_canny = feature.canny(img_low_res, sigma=4, low_threshold=2, high_threshold=10)
 
     # Perform Harris corner detection and find corner peaks
-    R = my_corner_harris(img_low_res / 255.0, k=0.05, sigma=2)
+    R = my_corner_harris(img_low_res / 255.0, k=0.05, sigma=3)
     corners = my_corner_peaks(R, rel_threshold=0.005)
 
     # Parameters for Hough Transform
     d_rho = 1
     d_theta = np.pi / 360
-    n = 40
+    n = 35
 
     # Perform Hough Transform
     H, L, res = my_hough_transform(img_canny, d_rho, d_theta, n)
@@ -278,7 +278,7 @@ if __name__ == "__main__":
     intersections = []
     for i in range(len(lines)):
         for j in range(i + 1, len(lines)):
-            if are_perpendicular(L[i][1], L[j][1], tol_deg=1):
+            if are_perpendicular(L[i][1], L[j][1], tol_deg=0.5):
                 temp = find_intersection(lines[i], lines[j])
                 if temp is not None:
                     temp = np.floor(temp).astype(int)
@@ -305,16 +305,20 @@ if __name__ == "__main__":
     filtered_intersections = np.array(filtered_intersections).astype(int)
     filtered_intersections = filtered_intersections[np.lexsort((filtered_intersections[:, 1], filtered_intersections[:, 0]))]
     unique_filtered_intersections = remove_close_points(filtered_intersections, eps=20)
-    
-    #Find the Rectangles
-    rectangles = find_rectangles(unique_filtered_intersections, img_low_res.shape[1], img_low_res.shape[0], tolerance=3.5)
-    print(f"Number of individual images found: {len(rectangles)}")
 
-    # Rescale rectangles to the high-resolution image dimensions
-    rescaled_rectangles = []
-    for rect in rectangles:
-        rescaled_rect = (np.array(rect) / scale_factor).astype(int)
-        rescaled_rectangles.append(rescaled_rect)
+    rescaled_intersections = []
+    for i in unique_filtered_intersections:
+        rescaled_point = (np.array(i) / scale_factor).astype(int)
+        rescaled_intersections.append(rescaled_point)
+
+    # Convert the list back to a numpy array if needed for further processing
+    rescaled_intersections = np.array(rescaled_intersections)
+
+    # Find the Rectangles
+    rescaled_rectangles = find_rectangles(rescaled_intersections, img_high_res.shape[1], img_high_res.shape[0], tolerance=50)
+    print(f"Number of individual images found: {len(rescaled_rectangles)}")
+
+
 
     for idx, rect in enumerate(rescaled_rectangles, start=1):
         img_grayscale = np.array(img)
