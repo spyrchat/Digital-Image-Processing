@@ -20,15 +20,23 @@ y0 = convolve(x, h, mode="wrap")
 # Generate the noisy image
 y = y0 + v
 
+# Fourier domain noise free image inverse filter
+H = np.fft.fft2(h, s=y0.shape)
+epsilon = 1e-10  # Small value to avoid division by zero
+Y0 = np.fft.fft2(y0)
+X_inv0 = (1 / (H + epsilon)) * Y0
+x_inv0 = np.fft.ifft2(X_inv0).real
+
 # Define a range of K values for the grid search
 K_values = np.logspace(-3, 1, num=100)  # Logarithmically spaced values between 0.001 and 10
 # Initialize variables to store the best K and the corresponding minimum MSE
 best_K = None
 min_mse = float('inf')
+
 # Perform grid search
 for K in K_values:
-    x_hat = my_wiener_filter(x, h, K)
-    mse = np.mean((x - x_hat)**2)
+    x_hat = my_wiener_filter(x_inv0, h, K)
+    mse = np.mean((x_inv0 - x_hat)**2)
     if mse < min_mse:
         min_mse = mse
         best_K = K
@@ -36,15 +44,12 @@ for K in K_values:
 print(f"Optimal K: {best_K}")
 print(f"Minimum MSE: {min_mse}")    
 
-x_hat = my_wiener_filter(y,h,best_K)
-
-# Inverse filtering for noiseless image y0
-x_inv0 = my_wiener_filter(y0, h, best_K)
+x_hat = my_wiener_filter(y, h, best_K)
 
 # Fourier domain inverse filter approach
 H = np.fft.fft2(h, s=y.shape)
 H_inv = np.conj(H) / (np.abs(H) ** 2 + 1/best_K)
-H_inv = 1/(H_inv + 1e-20)
+H_inv = 1/(H_inv + 1e-10)
 Y = np.fft.fft2(y)
 X_inv = H_inv * Y
 x_inv = np.fft.ifft2(X_inv).real
