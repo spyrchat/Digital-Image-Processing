@@ -6,13 +6,13 @@ from wiener_filtering import my_wiener_filter
 import hw3_helper_utils  # Ensure this module is in the same directory or in the Python path
 
 # Load the image and convert it to a grayscale NumPy array
-filename = "Assignment 3/checkerboard.tif"
+filename = "Assignment 3/cameraman.tif"
 img = Image.open(filename)
 bw_img = img.convert("L")
 img_array = np.array(bw_img)
 x = img_array / 255.0  # Normalize the image
 # Create white noise with level 0.02
-v = 0.02 * np.random.randn(*x.shape)
+v = 0.2 * np.random.randn(*x.shape)
 # Create motion blur filter
 h = hw3_helper_utils.create_motion_blur_filter(length=20, angle=30)
 # Obtain the filtered image
@@ -68,8 +68,8 @@ x_hat = my_wiener_filter(y, h, best_K)
 
 # Fourier domain inverse filter approach
 H = np.fft.fft2(h, s=y.shape)
-H_inv = np.conj(H) / (np.abs(H) ** 2 + 1/best_K)
-H_inv = 1/(H_inv + 1e-10)
+# H_inv = np.conj(H) / (np.abs(H) ** 2 + 1/best_K)
+H_inv = 1/(H + 1e-10)
 Y = np.fft.fft2(y)
 X_inv = H_inv * Y
 x_inv = np.fft.ifft2(X_inv).real
