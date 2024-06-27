@@ -6,15 +6,15 @@ from wiener_filtering import my_wiener_filter, inverse_H_filter
 import hw3_helper_utils  # Ensure this module is in the same directory or in the Python path
 
 # Load the image and convert it to a grayscale NumPy array
-filename = "Assignment 3/cameraman.tif"
+filename = "Assignment 3/checkerboard.tif"
 img = Image.open(filename)
 bw_img = img.convert("L")
 img_array = np.array(bw_img)
 x = img_array / 255.0  # Normalize the image
 # Create white noise with level 0.02
-v = 0.02 * np.random.randn(*x.shape)
+v = 0.2 * np.random.randn(*x.shape)
 # Create motion blur filter
-h = hw3_helper_utils.create_motion_blur_filter(length=10, angle=0) 
+h = hw3_helper_utils.create_motion_blur_filter(length=20, angle=30) 
 # Obtain the filtered image
 y0 = convolve(x, h, mode="wrap")
 # Generate the noisy image
@@ -23,7 +23,7 @@ y = y0 + v
 x_inv0 = inverse_H_filter(y0, h)
 
 # Define a range of K values for the grid search
-K_values = np.logspace(-3, 10, num=300)  # Logarithmically spaced values between 0.001 and 10
+K_values = np.logspace(-3, 10, num=300)  # Logarithmically spaced values between 0.001 and 100
 # Initialize variables to store the best K and the corresponding minimum MSE
 best_K = None
 min_mse = float('inf')
