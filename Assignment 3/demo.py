@@ -2,7 +2,7 @@ import numpy as np
 from scipy.ndimage import convolve
 from PIL import Image
 import matplotlib.pyplot as plt
-from wiener_filtering import my_wiener_filter
+from wiener_filtering import my_wiener_filter, inverse_H_filter
 import hw3_helper_utils  # Ensure this module is in the same directory or in the Python path
 
 # Load the image and convert it to a grayscale NumPy array
@@ -12,20 +12,15 @@ bw_img = img.convert("L")
 img_array = np.array(bw_img)
 x = img_array / 255.0  # Normalize the image
 # Create white noise with level 0.02
-v = 0.2 * np.random.randn(*x.shape)
+v = 0.02 * np.random.randn(*x.shape)
 # Create motion blur filter
-h = hw3_helper_utils.create_motion_blur_filter(length=20, angle=30)
+h = hw3_helper_utils.create_motion_blur_filter(length=10, angle=0) 
 # Obtain the filtered image
 y0 = convolve(x, h, mode="wrap")
 # Generate the noisy image
 y = y0 + v
 
-# Fourier domain noise free image inverse filter
-H = np.fft.fft2(h, s=y0.shape)
-epsilon = 1e-10  # Small value to avoid division by zero
-Y0 = np.fft.fft2(y0)
-X_inv0 = (1 / (H + epsilon)) * Y0
-x_inv0 = np.fft.ifft2(X_inv0).real
+x_inv0 = inverse_H_filter(y0, h)
 
 # Define a range of K values for the grid search
 K_values = np.logspace(-3, 10, num=300)  # Logarithmically spaced values between 0.001 and 10
@@ -47,7 +42,6 @@ for K in K_values:
         min_mse = mse
         best_K = K
 
-
 print(f"Optimal K: {best_K}")
 print(f"Minimum MSE: {min_mse}")
 
@@ -66,13 +60,7 @@ plt.show()
 
 x_hat = my_wiener_filter(y, h, best_K)
 
-# Fourier domain inverse filter approach
-H = np.fft.fft2(h, s=y.shape)
-# H_inv = np.conj(H) / (np.abs(H) ** 2 + 1/best_K)
-H_inv = 1/(H + 1e-10)
-Y = np.fft.fft2(y)
-X_inv = H_inv * Y
-x_inv = np.fft.ifft2(X_inv).real
+x_inv = inverse_H_filter(y, h)
 
 # Display the results
 fig, axs = plt.subplots(nrows=2, ncols=3, figsize=(15, 10))
