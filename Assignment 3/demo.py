@@ -11,10 +11,13 @@ img = Image.open(filename)
 bw_img = img.convert("L")
 img_array = np.array(bw_img)
 x = img_array / 255.0  # Normalize the image
-# Create white noise
+
+###### Create white noise ######
 v = 0.2 * np.random.randn(*x.shape)
-# Create motion blur filter
+
+###### Create motion blur filter ######
 h = hw3_helper_utils.create_motion_blur_filter(length=10, angle=0) 
+
 # Obtain the filtered image
 y0 = convolve(x, h, mode="wrap")
 # Generate the noisy image
