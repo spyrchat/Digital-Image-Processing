@@ -3,18 +3,18 @@ from scipy.ndimage import convolve
 from PIL import Image
 import matplotlib.pyplot as plt
 from wiener_filtering import my_wiener_filter, inverse_H_filter
-import hw3_helper_utils  # Ensure this module is in the same directory or in the Python path
+import hw3_helper_utils  
 
 # Load the image and convert it to a grayscale NumPy array
-filename = "Assignment 3/checkerboard.tif"
+filename = "Assignment 3/cameraman.tif"
 img = Image.open(filename)
 bw_img = img.convert("L")
 img_array = np.array(bw_img)
 x = img_array / 255.0  # Normalize the image
-# Create white noise with level 0.02
+# Create white noise
 v = 0.2 * np.random.randn(*x.shape)
 # Create motion blur filter
-h = hw3_helper_utils.create_motion_blur_filter(length=20, angle=30) 
+h = hw3_helper_utils.create_motion_blur_filter(length=10, angle=0) 
 # Obtain the filtered image
 y0 = convolve(x, h, mode="wrap")
 # Generate the noisy image
@@ -32,7 +32,7 @@ min_mse = float('inf')
 best_K = None
 min_mse = float('inf')
 
-# Perform grid search
+# Perform a grid search in order to find the optimal K value
 J_values = []
 for K in K_values:
     x_hat = my_wiener_filter(y, h, K)
@@ -45,15 +45,24 @@ for K in K_values:
 print(f"Optimal K: {best_K}")
 print(f"Minimum MSE: {min_mse}")
 
-# Plot the J(K) curve
+#------------- Plot the J(K) curve -------------#
+# Define a finer range of K values around the optimal K
+K_fine_values = np.linspace(best_K / 10, best_K * 10, num=100)
+J_fine_values = []
+for K in K_fine_values:
+    x_hat = my_wiener_filter(y, h, K)
+    mse = np.mean((x_inv0 - x_hat)**2)
+    J_fine_values.append(mse)
+
+# Plot the J(K) curve for the finer range around the optimal K
 plt.figure(figsize=(10, 6))
-plt.plot(K_values, J_values, marker='o')
+plt.plot(K_fine_values, J_fine_values, marker='o')
 plt.axvline(best_K, color='r', linestyle='--', label=f'Optimal K = {best_K:.4f}')
-plt.xscale('log')
-plt.yscale('log')
 plt.xlabel('K')
 plt.ylabel('J(K)')
-plt.title('J(K) vs K')
+plt.xscale('log')
+plt.yscale('log')
+plt.title('J(K) vs K around optimal K')
 plt.legend()
 plt.grid(True)
 plt.show()
@@ -62,7 +71,7 @@ x_hat = my_wiener_filter(y, h, best_K)
 
 x_inv = inverse_H_filter(y, h)
 
-# Display the results
+#------------- Display the results -------------#
 fig, axs = plt.subplots(nrows=2, ncols=3, figsize=(15, 10))
 
 axs[0][0].imshow(np.clip(x,0,1), cmap='gray')
