@@ -3,9 +3,9 @@ import cv2
 import matplotlib.pyplot as plt
 from skimage import feature
 from PIL import Image
-from deliverable_1 import my_hough_transform
-from deliverable_2 import my_corner_harris, my_corner_peaks
-from deliverable_3 import my_img_rotation
+from hough_transform import my_hough_transform
+from corner_harris import my_corner_harris, my_corner_peaks
+from img_rotation import my_img_rotation
 from itertools import combinations
 import math
 import os
