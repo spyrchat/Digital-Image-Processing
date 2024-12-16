@@ -10,7 +10,7 @@ Welcome to the **Digital Image Processing Assignments** repository! This collect
   - [My Lazy Scanner](#my-lazy-scanner)
   - [Wiener Filter](#wiener-filter)
 - [Getting Started](#getting-started)
-- [Dependencies](#dependencies)
+- [Dependencies](#requirements.txt)
 
 ## Introduction
 
